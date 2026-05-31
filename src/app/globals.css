@@ -427,29 +427,64 @@ a {
   background: rgba(20, 16, 38, 0.72);
 }
 
-.game-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+.game-screen {
   min-height: 100vh;
-  padding: 20px;
-  gap: 20px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
 }
 
-.game-stage {
-  min-height: calc(100vh - 40px);
-  padding: 18px;
+.game-frame {
+  position: relative;
+  width: min(100%, 1040px);
+  display: grid;
+  gap: 0;
   border: 4px solid var(--border-dark);
   box-shadow: 0 0 0 4px var(--border-light), 0 18px 40px var(--shadow);
-  background: linear-gradient(180deg, rgba(12, 9, 24, 0.94), rgba(23, 17, 39, 0.94));
+  background: linear-gradient(180deg, rgba(15, 12, 28, 0.94), rgba(24, 18, 42, 0.94));
+}
+
+.game-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 2px solid rgba(255, 214, 232, 0.2);
+}
+
+.game-title {
+  font-size: 14px;
+  color: var(--rose-soft);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.game-chrome {
+  display: flex;
+  gap: 8px;
+}
+
+.chrome-button {
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 2px solid var(--border-dark);
+  background: rgba(38, 29, 61, 0.92);
+  color: var(--text);
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.chrome-button:hover {
+  border-color: var(--gold);
 }
 
 .game-stage-inner {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 100%;
-  border: 2px solid rgba(255, 214, 232, 0.2);
-  overflow: hidden;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(12, 9, 24, 0.96), rgba(23, 17, 39, 0.96));
 }
 
 .canvas-shell {
@@ -484,43 +519,6 @@ a {
   image-rendering: pixelated;
 }
 
-.game-sidebar {
-  display: grid;
-  align-content: start;
-  gap: 16px;
-}
-
-.sidebar-card {
-  display: grid;
-  gap: 12px;
-  padding: 20px;
-  border: 3px solid var(--border-dark);
-  box-shadow: 0 0 0 3px rgba(215, 194, 255, 0.22);
-  background: var(--panel-strong);
-}
-
-.session-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-}
-
-.session-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 6px 10px;
-  border: 2px solid rgba(246, 210, 122, 0.38);
-  color: var(--gold);
-  background: rgba(54, 38, 15, 0.28);
-}
-
-.logout-wrap {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .tiny-button {
   min-height: 34px;
   padding: 6px 10px;
@@ -551,8 +549,7 @@ a {
 }
 
 @media (max-width: 960px) {
-  .login-layout,
-  .game-layout {
+  .login-layout {
     grid-template-columns: 1fr;
   }
 
