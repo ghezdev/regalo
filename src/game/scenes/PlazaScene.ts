@@ -5,6 +5,7 @@ import { dialogues } from "../data/dialogues";
 import { musicTracks } from "../data/music";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
+import { renderGround } from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
@@ -46,7 +47,7 @@ export class PlazaScene extends Phaser.Scene {
     this.interactKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.E) as Phaser.Input.Keyboard.Key;
     this.enterKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) as Phaser.Input.Keyboard.Key;
 
-    this.renderGround();
+    renderGround(this, plazaMap);
     const collisionLayer = this.physics.add.staticGroup();
     this.renderDecor(collisionLayer);
     this.createPlayer();
@@ -83,35 +84,6 @@ export class PlazaScene extends Phaser.Scene {
 
     resolveMovement(this.player, this.movementKeys, this.cursorKeys);
     this.refreshInteractionState();
-  }
-
-  private renderGround() {
-    const graphics = this.add.graphics();
-
-    for (let y = 0; y < plazaMap.height; y += 1) {
-      for (let x = 0; x < plazaMap.width; x += 1) {
-        const isPath = plazaMap.paths.some((point) => point.x === x && point.y === y);
-        const fillColor = isPath ? 0x8d869b : (x + y) % 3 === 0 ? 0x1d3f37 : 0x21453b;
-
-        graphics.fillStyle(fillColor, 1);
-        graphics.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-        if (!isPath && (x + y) % 7 === 0) {
-          graphics.fillStyle(0x2a5b46, 1);
-          graphics.fillRect(x * TILE_SIZE + 4, y * TILE_SIZE + 4, 2, 2);
-        }
-      }
-    }
-
-    plazaMap.paths.forEach((point) => {
-      graphics.fillStyle(0xa7a0af, 0.7);
-      graphics.fillRect(point.x * TILE_SIZE + 2, point.y * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-    });
-
-    graphics.generateTexture("plaza-ground", plazaMap.width * TILE_SIZE, plazaMap.height * TILE_SIZE);
-    graphics.destroy();
-
-    this.add.image(0, 0, "plaza-ground").setOrigin(0);
   }
 
   private renderDecor(collisionLayer: Phaser.Physics.Arcade.StaticGroup) {
