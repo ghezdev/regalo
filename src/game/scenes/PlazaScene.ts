@@ -15,6 +15,8 @@ import {
   renderBench,
   renderMailbox,
   LIGHT_DEPTH,
+  OVERLAY_DEPTH,
+  UI_DEPTH,
 } from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
@@ -178,7 +180,7 @@ export class PlazaScene extends Phaser.Scene {
       0x04050b,
       0.18,
     );
-    vignette.setScrollFactor(0).setDepth(30);
+    vignette.setScrollFactor(0).setDepth(OVERLAY_DEPTH);
     vignette.setBlendMode(Phaser.BlendModes.MULTIPLY);
 
     // firefly dot texture
@@ -234,6 +236,6 @@ export class PlazaScene extends Phaser.Scene {
       })
       .setOrigin(1, 0)
       .setScrollFactor(0)
-      .setDepth(40);
+      .setDepth(UI_DEPTH);
   }
 }
