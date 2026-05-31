@@ -5,7 +5,7 @@ import { dialogues } from "../data/dialogues";
 import { musicTracks } from "../data/music";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
-import { renderGround, renderFountain } from "../systems/decor";
+import { renderGround, renderFountain, renderBuilding } from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
@@ -151,34 +151,7 @@ export class PlazaScene extends Phaser.Scene {
       }
 
       if (object.kind === "building") {
-        const wallColor =
-          object.variant === "dance"
-            ? 0xb85f77
-            : object.variant === "photos"
-              ? 0x7f6cb0
-              : object.variant === "audio"
-                ? 0x55779e
-                : 0x9b7f69;
-        const roofColor =
-          object.variant === "home" ? 0x6b3555 : object.variant === "photos" ? 0x4a3765 : 0x6b3e4b;
-
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + height / 2, width, height, wallColor));
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + 6, width + 8, 12, roofColor));
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + height - 10, 12, 20, 0x4e342e));
-        decor.add(this.add.rectangle(worldX + 16, worldY + 20, 10, 10, 0xffd46a, 0.8));
-        decor.add(this.add.rectangle(worldX + width - 16, worldY + 20, 10, 10, 0xffd46a, 0.8));
-
-        if (object.label) {
-          decor.add(
-            this.add
-              .text(worldX + width / 2, worldY - 10, object.label, {
-                fontFamily: "monospace",
-                fontSize: "8px",
-                color: "#f7d6e0",
-              })
-              .setOrigin(0.5),
-          );
-        }
+        renderBuilding(this, worldX, worldY, width, height, object.variant, object.label);
       }
 
       if (object.kind === "mailbox") {

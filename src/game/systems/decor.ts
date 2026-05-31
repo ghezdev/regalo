@@ -168,3 +168,67 @@ export function renderFountain(
   const banner = scene.add.container(0, 0, [bannerBg, bannerTitle, bannerSub]);
   banner.setDepth(footDepth(by + 12));
 }
+
+interface BuildingPalette {
+  wall: number;
+  wallShade: number;
+  roof: number;
+  roofShade: number;
+}
+
+const BUILDING_PALETTES: Record<string, BuildingPalette> = {
+  dance: { wall: 0xb85f77, wallShade: 0x8f4258, roof: 0x6b3e4b, roofShade: 0x4e2a36 },
+  photos: { wall: 0x7f6cb0, wallShade: 0x5d4d8a, roof: 0x4a3765, roofShade: 0x342649 },
+  audio: { wall: 0x55779e, wallShade: 0x3d597a, roof: 0x35455e, roofShade: 0x253245 },
+  home: { wall: 0x9b7f69, wallShade: 0x75604e, roof: 0x6b3555, roofShade: 0x4a2239 },
+};
+
+const WINDOW_LIT = 0xffd98c;
+const DOOR_DARK = 0x2a1a2e;
+const DOOR_GLOW = 0xffcf73;
+const SIGN_BG = 0x3a2a1f;
+const SIGN_TEXT = "#ffe6b0";
+
+export function renderBuilding(
+  scene: Phaser.Scene,
+  worldX: number,
+  worldY: number,
+  width: number,
+  height: number,
+  variant: string | undefined,
+  label: string | undefined,
+): void {
+  const pal = BUILDING_PALETTES[variant ?? "home"] ?? BUILDING_PALETTES.home;
+  const cx = worldX + width / 2;
+  const footY = worldY + height;
+  const roofH = Math.min(18, height * 0.45);
+  const c = scene.add.container(0, 0);
+
+  // wall body with right-side shade
+  c.add(scene.add.rectangle(cx, worldY + roofH + (height - roofH) / 2, width, height - roofH, pal.wall));
+  c.add(scene.add.rectangle(worldX + width - width * 0.18, worldY + roofH + (height - roofH) / 2, width * 0.18, height - roofH, pal.wallShade));
+
+  // gabled roof: trapezoid via two stacked rects + ridge
+  c.add(scene.add.rectangle(cx, worldY + roofH / 2 + 2, width + 8, roofH - 2, pal.roof));
+  c.add(scene.add.rectangle(cx, worldY + 3, width * 0.62, 6, pal.roofShade));
+  c.add(scene.add.rectangle(cx, worldY + roofH, width + 8, 2, pal.roofShade)); // ridge line
+
+  // lit windows
+  const winY = worldY + roofH + 10;
+  c.add(scene.add.rectangle(worldX + 14, winY, 9, 9, WINDOW_LIT).setStrokeStyle(1, 0xfff3d6));
+  c.add(scene.add.rectangle(worldX + width - 14, winY, 9, 9, WINDOW_LIT).setStrokeStyle(1, 0xfff3d6));
+
+  // door + warm glow
+  const doorGlow = scene.add.ellipse(cx, footY - 2, 26, 16, DOOR_GLOW, 0.22);
+  doorGlow.setBlendMode(Phaser.BlendModes.ADD).setDepth(LIGHT_DEPTH);
+  c.add(scene.add.rectangle(cx, footY - 11, 14, 22, DOOR_DARK).setStrokeStyle(1, 0xffcf73));
+
+  c.setDepth(footDepth(footY));
+
+  if (label) {
+    const sign = scene.add.container(0, 0);
+    sign.add(scene.add.rectangle(cx, worldY - 8, label.length * 5 + 12, 14, SIGN_BG).setStrokeStyle(1, 0x6e4f37));
+    sign.add(scene.add.text(cx, worldY - 8, label, { fontFamily: "monospace", fontSize: "8px", color: SIGN_TEXT }).setOrigin(0.5));
+    sign.setDepth(footDepth(footY) + 1);
+  }
+}
