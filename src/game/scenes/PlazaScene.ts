@@ -5,7 +5,7 @@ import { dialogues } from "../data/dialogues";
 import { musicTracks } from "../data/music";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
-import { renderGround } from "../systems/decor";
+import { renderGround, renderFountain } from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
@@ -147,10 +147,7 @@ export class PlazaScene extends Phaser.Scene {
       const height = object.height * TILE_SIZE;
 
       if (object.kind === "fountain") {
-        decor.add(this.add.ellipse(worldX + width / 2, worldY + height / 2, width, height, 0x7d8fd6));
-        decor.add(this.add.ellipse(worldX + width / 2, worldY + height / 2, width - 10, height - 10, 0xa7c4ff));
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + height / 2, 6, 18, 0xe9f0ff));
-        decor.add(this.add.circle(worldX + width / 2, worldY + height / 2 - 12, 5, 0xe9f0ff, 0.9));
+        renderFountain(this, worldX, worldY, width, height);
       }
 
       if (object.kind === "building") {

@@ -44,3 +44,9 @@ export const dialogues: Record<string, DialogueEntry> = {
     ],
   },
 };
+
+// PLACEHOLDER — Guillermo: personalizar este texto del cartel de la fuente.
+export const plazaBanner = {
+  title: "Para Naomi",
+  subtitle: "Tu plaza de recuerdos",
+};
