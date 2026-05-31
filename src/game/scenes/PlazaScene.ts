@@ -14,6 +14,7 @@ import {
   renderFlowerBed,
   renderBench,
   renderMailbox,
+  LIGHT_DEPTH,
 } from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
@@ -179,6 +180,26 @@ export class PlazaScene extends Phaser.Scene {
     );
     vignette.setScrollFactor(0).setDepth(30);
     vignette.setBlendMode(Phaser.BlendModes.MULTIPLY);
+
+    // firefly dot texture
+    const dot = this.add.graphics();
+    dot.fillStyle(0xfff0b0, 1).fillCircle(2, 2, 2);
+    dot.generateTexture("firefly", 4, 4);
+    dot.destroy();
+
+    const emitter = this.add.particles(0, 0, "firefly", {
+      x: { min: 0, max: plazaMap.width * TILE_SIZE },
+      y: { min: 0, max: plazaMap.height * TILE_SIZE },
+      lifespan: 4000,
+      speedY: { min: -6, max: 6 },
+      speedX: { min: -6, max: 6 },
+      scale: { start: 0.8, end: 0 },
+      alpha: { start: 0.7, end: 0 },
+      frequency: 600,
+      quantity: 1,
+      blendMode: Phaser.BlendModes.ADD,
+    });
+    emitter.setDepth(LIGHT_DEPTH);
   }
 
   private createHud() {
