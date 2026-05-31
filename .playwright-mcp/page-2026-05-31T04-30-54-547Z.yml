@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e49] [cursor=pointer]:
+    - img [ref=e50]
+  - alert [ref=e53]
+  - main [ref=e54]:
+    - complementary [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - heading "Sesion" [level=2] [ref=e63]
+          - generic [ref=e64]: guillermo
+        - paragraph [ref=e65]: Guillermo entro a la plaza nocturna.
+        - paragraph [ref=e66]: "Usuario: guillermo"
+        - button "Borrar sesion" [ref=e68] [cursor=pointer]
+      - generic [ref=e69]:
+        - heading "Controles" [level=2] [ref=e70]
+        - paragraph [ref=e71]: Movimiento con WASD o flechas. Interaccion reservada para E o Enter.
+      - generic [ref=e72]:
+        - heading "MVP" [level=2] [ref=e73]
+        - paragraph [ref=e74]: Canvas cliente listo para montar la plaza, dialogos y musica placeholder.

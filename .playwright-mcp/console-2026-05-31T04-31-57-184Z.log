@@ -1,0 +1,75 @@
+[      62ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:196
+[    1329ms] [LOG] [Fast Refresh] done in 1267ms @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[    2575ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3000/game?_rsc=R8bMzwzeML-r-Xtd:0
+[    2601ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3000/:0
+[    2911ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:28004
+[    3049ms] Error: Cannot find module './331.js'
+Require stack:
+- /home/guille/code/regalo/.next/server/webpack-runtime.js
+- /home/guille/code/regalo/.next/server/app/icon.svg/route.js
+- /home/guille/code/regalo/node_modules/next/dist/server/require.js
+- /home/guille/code/regalo/node_modules/next/dist/server/load-components.js
+- /home/guille/code/regalo/node_modules/next/dist/build/utils.js
+- /home/guille/code/regalo/node_modules/next/dist/build/swc/options.js
+- /home/guille/code/regalo/node_modules/next/dist/build/swc/index.js
+- /home/guille/code/regalo/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /home/guille/code/regalo/node_modules/next/dist/server/config.js
+- /home/guille/code/regalo/node_modules/next/dist/server/next.js
+- /home/guille/code/regalo/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at <unknown> (file:///home/guille/code/regalo/node_modules/next/dist/server/require-hook.js:57:36)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (file:///home/guille/code/regalo/node_modules/next/dist/server/require-hook.js:68:28)
+    at require (node:internal/modules/helpers:153:16)
+    at __webpack_require__.f.require (file:///home/guille/code/regalo/.next/server/webpack-runtime.js:195:28)
+    at <unknown> (file:///home/guille/code/regalo/.next/server/webpack-runtime.js:108:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (file:///home/guille/code/regalo/.next/server/webpack-runtime.js:107:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (file:///home/guille/code/regalo/.next/server/webpack-runtime.js:159:22)
+    at <unknown> (file:///home/guille/code/regalo/.next/server/app/page.js:2:11316)
+    at Object.<anonymous> (file:///home/guille/code/regalo/.next/server/app/page.js:2:11364)
+    at Module._compile (node:internal/modules/cjs/loader:1830:14)
+    at Object..js (node:internal/modules/cjs/loader:1961:10)
+    at Module.load (node:internal/modules/cjs/loader:1553:32)
+    at Module._load (node:internal/modules/cjs/loader:1355:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (file:///home/guille/code/regalo/node_modules/next/dist/server/require-hook.js:68:28)
+    at require (node:internal/modules/helpers:153:16)
+    at requirePage (file:///home/guille/code/regalo/node_modules/next/dist/server/require.js:99:80)
+    at loadComponentsImpl (file:///home/guille/code/regalo/node_modules/next/dist/server/load-components.js:132:57)
+    at async DevServer.findPageComponentsImpl (file:///home/guille/code/regalo/node_modules/next/dist/server/next-server.js:900:36)
+    at async DevServer.findPageComponents (file:///home/guille/code/regalo/node_modules/next/dist/server/dev/next-dev-server.js:706:16)
+    at async DevServer.renderPageComponent (file:///home/guille/code/regalo/node_modules/next/dist/server/base-server.js:1468:24)
+    at async DevServer.renderToResponseImpl (file:///home/guille/code/regalo/node_modules/next/dist/server/base-server.js:1522:32)
+    at async DevServer.pipeImpl (file:///home/guille/code/regalo/node_modules/next/dist/server/base-server.js:1026:25)
+    at async NextNodeServer.handleCatchallRenderRequest (file:///home/guille/code/regalo/node_modules/next/dist/server/next-server.js:394:17)
+    at async DevServer.handleRequestImpl (file:///home/guille/code/regalo/node_modules/next/dist/server/base-server.js:917:17)
+    at async (file:///home/guille/code/regalo/node_modules/next/dist/server/dev/next-dev-server.js:400:20)
+    at async Span.traceAsyncFn (file:///home/guille/code/regalo/node_modules/next/dist/trace/trace.js:157:20)
+    at async DevServer.handleRequest (file:///home/guille/code/regalo/node_modules/next/dist/server/dev/next-dev-server.js:396:24)
+    at async invokeRender (file:///home/guille/code/regalo/node_modules/next/dist/server/lib/router-server.js:240:21)
+    at async handleRequest (file:///home/guille/code/regalo/node_modules/next/dist/server/lib/router-server.js:437:24)
+    at async requestHandlerImpl (file:///home/guille/code/regalo/node_modules/next/dist/server/lib/router-server.js:485:13)
+    at async Server.requestListener (file:///home/guille/code/regalo/node_modules/next/dist/server/lib/start-server.js:226:13)
+[    3163ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[   44236ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:88
+[   45238ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:88
+[   46244ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:88
+[   47247ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:88
+[   49302ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[   49330ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/_next/static/webpack/326c88f5b003acf4.webpack.hot-update.json:0
+[   49331ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:347
+[   49674ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[   50333ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/_next/static/webpack/326c88f5b003acf4.webpack.hot-update.json:0
+[   50334ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(pages-dir-browser)/./node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:347
+[   51342ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[   52265ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:196
+[   53194ms] [LOG] [Fast Refresh] done in 930ms @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/report-hmr-latency.js:13
+[   54411ms] [LOG] %c %c %c %c %c Phaser v3.90.0 (WebGL | Web Audio) %c https://phaser.io/v390 background: #ff0000 background: #ffff00 background: #00ff00 background: #00ffff color: #ffffff; background: #000000 background: transparent @ webpack-internal:///(app-pages-browser)/./node_modules/phaser/dist/phaser.js:12692
