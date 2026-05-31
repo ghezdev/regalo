@@ -11,4 +11,5 @@ build/
 *.tsbuildinfo
 
 output/
+.playwright-mcp/
 

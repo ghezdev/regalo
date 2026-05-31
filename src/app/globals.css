@@ -321,14 +321,12 @@ a {
   background: var(--panel);
 }
 
-.panel-card h2,
-.game-sidebar h2 {
+.panel-card h2 {
   margin: 0;
   font-size: 22px;
 }
 
 .panel-card p,
-.game-sidebar p,
 .field-hint,
 .hud-text {
   margin: 0;
@@ -558,10 +556,6 @@ a {
     border-top: 4px solid rgba(183, 157, 229, 0.35);
   }
 
-  .game-stage {
-    min-height: auto;
-  }
-
   .canvas-shell {
     width: 100%;
   }
@@ -579,13 +573,11 @@ a {
   }
 
   .login-panel,
-  .panel-card,
-  .sidebar-card {
+  .panel-card {
     padding: 18px;
   }
 
-  .credential-item,
-  .session-row {
+  .credential-item {
     flex-direction: column;
     align-items: flex-start;
   }
