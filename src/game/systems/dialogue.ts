@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { UI_DEPTH } from "../systems/decor";
 
 export class DialogueController {
   private readonly root: Phaser.GameObjects.Container;
@@ -14,9 +15,16 @@ export class DialogueController {
     const width = scene.scale.width;
     const height = scene.scale.height;
 
-    this.panel = scene.add
-      .rectangle(width / 2, height - 48, width - 24, 72, 0x111427, 0.9)
+    const border = scene.add
+      .rectangle(width / 2, height - 48, width - 20, 76, 0x2a2140)
       .setStrokeStyle(2, 0xe9d7a1)
+      .setScrollFactor(0);
+    this.panel = scene.add
+      .rectangle(width / 2, height - 48, width - 28, 64, 0x141029, 0.96)
+      .setScrollFactor(0);
+    const namePlate = scene.add
+      .rectangle(64, height - 76, 96, 16, 0x3a2a4f)
+      .setStrokeStyle(1, 0xf7c9d9)
       .setScrollFactor(0);
 
     this.nameText = scene.add
@@ -45,12 +53,14 @@ export class DialogueController {
       .setScrollFactor(0);
 
     this.root = scene.add.container(0, 0, [
+      border,
       this.panel,
+      namePlate,
       this.nameText,
       this.bodyText,
       this.hintText,
     ]);
-    this.root.setDepth(50);
+    this.root.setDepth(UI_DEPTH);
     this.root.setVisible(false);
   }
 

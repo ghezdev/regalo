@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type { MapInteraction } from "../types/content";
+import { PROMPT_DEPTH } from "../systems/decor";
 
 export interface ActiveInteraction {
   zone: Phaser.GameObjects.Zone;
@@ -20,7 +21,7 @@ export function createInteractionPrompt(
   );
   scene.physics.add.existing(zone, true);
 
-  const bubble = scene.add.rectangle(0, 0, 32, 16, 0x161a31, 0.92).setStrokeStyle(1, 0xe9d7a1);
+  const bubble = scene.add.rectangle(0, 0, 32, 16, 0x2a2140, 0.92).setStrokeStyle(1, 0xe9d7a1);
   const text = scene.add.text(0, -1, interaction.label, {
     fontFamily: "monospace",
     fontSize: "10px",
@@ -29,8 +30,17 @@ export function createInteractionPrompt(
   text.setOrigin(0.5, 0.5);
 
   const prompt = scene.add.container(zone.x, zone.y - tileSize, [bubble, text]);
-  prompt.setDepth(20);
+  prompt.setDepth(PROMPT_DEPTH);
   prompt.setVisible(false);
+
+  scene.tweens.add({
+    targets: prompt,
+    y: prompt.y - 3,
+    duration: 900,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.inOut",
+  });
 
   return { zone, prompt, data: interaction };
 }

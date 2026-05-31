@@ -205,6 +205,8 @@ export class PlazaScene extends Phaser.Scene {
   }
 
   private createHud() {
+    this.add.rectangle(96, 15, 180, 18, 0x141029, 0.7).setScrollFactor(0).setDepth(UI_DEPTH);
+
     this.add
       .text(12, 10, `${this.session.displayName} en la plaza`, {
         fontFamily: "monospace",
@@ -212,7 +214,7 @@ export class PlazaScene extends Phaser.Scene {
         color: "#f6f3ff",
       })
       .setScrollFactor(0)
-      .setDepth(40);
+      .setDepth(UI_DEPTH);
 
     this.add
       .text(12, 24, "Mover: WASD/Flechas  Interactuar: E", {
@@ -221,7 +223,7 @@ export class PlazaScene extends Phaser.Scene {
         color: "#d4caef",
       })
       .setScrollFactor(0)
-      .setDepth(40);
+      .setDepth(UI_DEPTH);
   }
 
   private startPlaceholderMusic() {
