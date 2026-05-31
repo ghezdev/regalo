@@ -92,6 +92,7 @@ export class PlazaScene extends Phaser.Scene {
     }
 
     resolveMovement(this.player, this.movementKeys, this.cursorKeys);
+    this.player.setDepth(this.player.y);
     this.refreshInteractionState();
   }
 
@@ -134,9 +135,9 @@ export class PlazaScene extends Phaser.Scene {
     this.player = this.physics.add
       .sprite(spawn.x * TILE_SIZE + 8, spawn.y * TILE_SIZE + 8, character.textureKey, 0)
       .setSize(12, 8)
-      .setOffset(2, 12)
-      .setDepth(10);
+      .setOffset(2, 12);
 
+    this.player.setDepth(this.player.y);
     this.player.setCollideWorldBounds(true);
     this.player.setData("lastDirection", "down");
   }
