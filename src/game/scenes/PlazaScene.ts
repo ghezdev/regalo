@@ -5,7 +5,16 @@ import { dialogues } from "../data/dialogues";
 import { musicTracks } from "../data/music";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
-import { renderGround, renderFountain, renderBuilding } from "../systems/decor";
+import {
+  renderGround,
+  renderFountain,
+  renderBuilding,
+  renderLamp,
+  renderTree,
+  renderFlowerBed,
+  renderBench,
+  renderMailbox,
+} from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
@@ -87,58 +96,10 @@ export class PlazaScene extends Phaser.Scene {
   }
 
   private renderDecor(collisionLayer: Phaser.Physics.Arcade.StaticGroup) {
-    const decor = this.add.container(0, 0);
-
-    plazaMap.flowerBeds.forEach((point, index) => {
-      const palette = index % 3;
-      const colors = [0xf0a6ca, 0xf6d5dc, 0xe75874];
-      const flower = this.add.container(point.x * TILE_SIZE, point.y * TILE_SIZE);
-      const patch = this.add.rectangle(8, 8, TILE_SIZE, TILE_SIZE, 0x21453b, 0);
-      const stem = this.add.rectangle(8, 10, 2, 5, 0x2f8053);
-      const bloom = this.add.rectangle(8, 6, 6, 6, colors[palette]);
-      flower.add([patch, stem, bloom]);
-      decor.add(flower);
-    });
-
-    plazaMap.trees.forEach((point) => {
-      const trunk = this.add.rectangle(
-        point.x * TILE_SIZE + 8,
-        point.y * TILE_SIZE + 16,
-        6,
-        14,
-        0x5a3b28,
-      );
-      const leaves = this.add.ellipse(
-        point.x * TILE_SIZE + 8,
-        point.y * TILE_SIZE + 10,
-        22,
-        18,
-        0x30614e,
-      );
-      decor.add([leaves, trunk]);
-    });
-
-    plazaMap.benches.forEach((point) => {
-      const bench = this.add.container(point.x * TILE_SIZE, point.y * TILE_SIZE);
-      bench.add([
-        this.add.rectangle(8, 9, 14, 4, 0x8a5b45),
-        this.add.rectangle(5, 13, 2, 5, 0x594238),
-        this.add.rectangle(11, 13, 2, 5, 0x594238),
-      ]);
-      decor.add(bench);
-    });
-
-    plazaMap.lamps.forEach((point) => {
-      const lamp = this.add.container(point.x * TILE_SIZE, point.y * TILE_SIZE);
-      lamp.add([
-        this.add.rectangle(8, 11, 3, 14, 0x4f4d64),
-        this.add.rectangle(8, 4, 8, 8, 0xffd46a),
-      ]);
-      const glow = this.add.circle(point.x * TILE_SIZE + 8, point.y * TILE_SIZE + 6, 18, 0xffd46a, 0.16);
-      glow.setBlendMode(Phaser.BlendModes.ADD);
-      decor.add(glow);
-      decor.add(lamp);
-    });
+    plazaMap.flowerBeds.forEach((p, i) => renderFlowerBed(this, p.x * TILE_SIZE, p.y * TILE_SIZE, i));
+    plazaMap.trees.forEach((p) => renderTree(this, p.x * TILE_SIZE, p.y * TILE_SIZE));
+    plazaMap.benches.forEach((p) => renderBench(this, p.x * TILE_SIZE, p.y * TILE_SIZE));
+    plazaMap.lamps.forEach((p) => renderLamp(this, p.x * TILE_SIZE, p.y * TILE_SIZE));
 
     plazaMap.objects.forEach((object) => {
       const worldX = object.x * TILE_SIZE;
@@ -155,9 +116,7 @@ export class PlazaScene extends Phaser.Scene {
       }
 
       if (object.kind === "mailbox") {
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + height / 2, 14, 16, 0xc76067));
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + 6, 10, 2, 0x3c2233));
-        decor.add(this.add.rectangle(worldX + width / 2, worldY + 18, 4, 10, 0x5f4336));
+        renderMailbox(this, worldX, worldY, width, height);
       }
 
       if (object.solid) {

@@ -232,3 +232,69 @@ export function renderBuilding(
     sign.setDepth(footDepth(footY) + 1);
   }
 }
+
+export function renderLamp(scene: Phaser.Scene, worldX: number, worldY: number): void {
+  const baseX = worldX + 8;
+  const footY = worldY + 18;
+  const pool = scene.add.ellipse(baseX, footY, 30, 12, 0xffd46a, 0.16);
+  pool.setBlendMode(Phaser.BlendModes.ADD).setDepth(LIGHT_DEPTH);
+  const glow = scene.add.circle(baseX, worldY + 4, 14, 0xffd46a, 0.22);
+  glow.setBlendMode(Phaser.BlendModes.ADD).setDepth(LIGHT_DEPTH);
+  const c = scene.add.container(0, 0, [
+    scene.add.rectangle(baseX, worldY + 12, 3, 16, 0x4f4d64),
+    scene.add.rectangle(baseX, worldY + 4, 7, 8, 0x6a6480),
+    scene.add.rectangle(baseX, worldY + 4, 5, 6, 0xffe39a),
+  ]);
+  c.setDepth(footDepth(footY));
+  scene.tweens.add({ targets: glow, alpha: 0.3, duration: 1800, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+}
+
+export function renderTree(scene: Phaser.Scene, worldX: number, worldY: number): void {
+  const cx = worldX + 8;
+  const footY = worldY + 22;
+  const shadow = scene.add.ellipse(cx, footY, 22, 8, 0x000000, 0.22);
+  shadow.setDepth(LIGHT_DEPTH);
+  const c = scene.add.container(0, 0, [
+    scene.add.rectangle(cx, worldY + 16, 6, 14, 0x5a3b28),
+    scene.add.ellipse(cx, worldY + 8, 24, 22, 0x254f3f),
+    scene.add.ellipse(cx, worldY + 6, 20, 18, 0x30614e),
+    scene.add.ellipse(cx - 4, worldY + 3, 8, 7, 0x3c7a60),
+  ]);
+  c.setDepth(footDepth(footY));
+}
+
+const FLOWER_COLORS = [0xf0a6ca, 0xf6d5dc, 0xe75874, 0xffffff];
+
+export function renderFlowerBed(scene: Phaser.Scene, worldX: number, worldY: number, index: number): void {
+  const c = scene.add.container(worldX, worldY);
+  c.add(scene.add.rectangle(8, 12, 12, 4, 0x1c3a2f)); // soil
+  for (let i = 0; i < 3; i += 1) {
+    const fx = 3 + i * 5;
+    c.add(scene.add.rectangle(fx, 9, 1, 5, 0x2f8053)); // stem
+    c.add(scene.add.rectangle(fx, 5, 4, 4, FLOWER_COLORS[(index + i) % FLOWER_COLORS.length]));
+    c.add(scene.add.rectangle(fx, 5, 1, 1, 0xfff3d6)); // highlight
+  }
+  c.setDepth(footDepth(worldY + 14));
+}
+
+export function renderBench(scene: Phaser.Scene, worldX: number, worldY: number): void {
+  const c = scene.add.container(worldX, worldY, [
+    scene.add.rectangle(8, 7, 16, 3, 0x5a4234), // backrest
+    scene.add.rectangle(8, 11, 16, 4, 0x8a5b45), // seat
+    scene.add.rectangle(3, 15, 2, 5, 0x4a352b),
+    scene.add.rectangle(13, 15, 2, 5, 0x4a352b),
+  ]);
+  c.setDepth(footDepth(worldY + 20));
+}
+
+export function renderMailbox(scene: Phaser.Scene, worldX: number, worldY: number, width: number, height: number): void {
+  const cx = worldX + width / 2;
+  const footY = worldY + height;
+  const c = scene.add.container(0, 0, [
+    scene.add.rectangle(cx, footY - 6, 4, 12, 0x5f4336), // post
+    scene.add.rectangle(cx, worldY + 8, 14, 12, 0xc76067), // body
+    scene.add.rectangle(cx, worldY + 4, 14, 4, 0xa84a52), // lid
+    scene.add.rectangle(cx + 6, worldY + 8, 2, 6, 0xffe39a), // flag
+  ]);
+  c.setDepth(footDepth(footY));
+}
