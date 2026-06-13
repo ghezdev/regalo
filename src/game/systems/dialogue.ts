@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { UI_DEPTH } from "../systems/decor";
+import { UI_DEPTH } from "../constants/depths";
 
 export class DialogueController {
   private readonly root: Phaser.GameObjects.Container;

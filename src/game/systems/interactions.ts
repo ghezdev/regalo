@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import type { MapInteraction } from "../types/content";
-import { PROMPT_DEPTH } from "../systems/decor";
+import { PROMPT_DEPTH } from "../constants/depths";
 
 export interface ActiveInteraction {
   zone: Phaser.GameObjects.Zone;

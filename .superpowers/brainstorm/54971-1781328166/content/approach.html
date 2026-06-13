@@ -1,0 +1,45 @@
+<h2>¿Cómo definir los límites del mapa?</h2>
+<p class="subtitle">El archivo LIMITES.png tiene una línea roja que delimita la zona caminable. ¿Cómo quieres implementar esas colisiones?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Rectángulos invisibles (recomendado)</h3>
+      <p>Se mapean manualmente los bordes del área caminable usando rectángulos de colisión invisibles que siguen aproximadamente la línea roja. Rápido de implementar, fácil de ajustar.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>✓</h4><ul><li>Simple y performante</li><li>Fácil de editar</li></ul></div>
+        <div class="cons"><h4>✗</h4><ul><li>No pixel-perfect</li><li>Esquinas aproximadas</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Tilemap de colisión</h3>
+      <p>Se crea una cuadrícula invisible (por ejemplo 16×16 px por tile) donde cada celda es "sólida" o "caminable" según la imagen de límites. El jugador navega dentro de las celdas libres.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>✓</h4><ul><li>Preciso y escalable</li><li>Mismo sistema que antes</li></ul></div>
+        <div class="cons"><h4>✗</h4><ul><li>Hay que mapear todas las celdas</li><li>Más trabajo inicial</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Polígono de colisión</h3>
+      <p>Se traza la línea roja como un polígono de puntos (x,y) y se usa como borde del mundo. El jugador no puede salir del polígono.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>✓</h4><ul><li>Máxima fidelidad a la imagen</li><li>Se ve más natural</li></ul></div>
+        <div class="cons"><h4>✗</h4><ul><li>Más complejo en Phaser</li><li>Difícil de mantener</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px">
+  <p class="label">Contexto visual</p>
+  <p style="font-size:13px;color:#aaa">La imagen de límites muestra que la zona caminable es el área central (caminos + fuente) y los bordes del mapa son bosque/árboles no transitables. Los puntos amarillos son zonas de interacción (edificios, fuente).</p>
+</div>
