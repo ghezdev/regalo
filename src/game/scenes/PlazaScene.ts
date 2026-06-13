@@ -1,27 +1,14 @@
 import * as Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../config";
-import { characters } from "../data/characters";
 import { dialogues } from "../data/dialogues";
-import { musicTracks } from "../data/music";
+import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SPEED, WORLD_WIDTH, WORLD_HEIGHT } from "../config";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
-import {
-  renderGround,
-  renderFountain,
-  renderBuilding,
-  renderLamp,
-  renderTree,
-  renderFlowerBed,
-  renderBench,
-  renderMailbox,
-  LIGHT_DEPTH,
-  OVERLAY_DEPTH,
-  UI_DEPTH,
-} from "../systems/decor";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
 import type { GameSession } from "../types/game";
+
+const UI_DEPTH = 100;
 
 interface PlazaSceneData {
   session: GameSession;
@@ -34,9 +21,11 @@ export class PlazaScene extends Phaser.Scene {
   private movementKeys!: MovementKeys;
   private interactKey!: Phaser.Input.Keyboard.Key;
   private enterKey!: Phaser.Input.Keyboard.Key;
+  private floorKey!: Phaser.Input.Keyboard.Key;
   private dialogue!: DialogueController;
   private interactions: ActiveInteraction[] = [];
   private activeInteraction: ActiveInteraction | null = null;
+  private guilleFloorActive = false;
 
   constructor() {
     super("plaza");
@@ -47,166 +36,63 @@ export class PlazaScene extends Phaser.Scene {
   }
 
   create() {
-    this.physics.world.setBounds(
-      0,
-      0,
-      plazaMap.width * TILE_SIZE,
-      plazaMap.height * TILE_SIZE,
-    );
+    // ── World ──────────────────────────────────────────────────────
+    this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-    this.cursorKeys = this.input.keyboard?.createCursorKeys() as Phaser.Types.Input.Keyboard.CursorKeys;
+    // ── Background ────────────────────────────────────────────────
+    this.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, "plaza-bg").setDepth(0);
+
+    // ── Input ─────────────────────────────────────────────────────
+    this.cursorKeys = this.input.keyboard!.createCursorKeys();
     this.movementKeys = createMovementKeys(this);
-    this.interactKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.E) as Phaser.Input.Keyboard.Key;
-    this.enterKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) as Phaser.Input.Keyboard.Key;
+    this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    this.enterKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    this.floorKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F);
 
-    renderGround(this, plazaMap);
-    const collisionLayer = this.physics.add.staticGroup();
-    this.renderDecor(collisionLayer);
-    this.createPlayer();
-    this.physics.add.collider(this.player, collisionLayer);
-
-    this.dialogue = new DialogueController(this);
-    createAudioToggle(this);
-    this.createInteractions();
-    this.createHud();
-    this.createCamera();
-    this.startPlaceholderMusic();
-  }
-
-  update() {
-    if (Phaser.Input.Keyboard.JustDown(this.interactKey) || Phaser.Input.Keyboard.JustDown(this.enterKey)) {
-      if (this.dialogue.isVisible()) {
-        this.dialogue.advance();
-        return;
-      }
-
-      if (this.activeInteraction) {
-        const dialogue = dialogues[this.activeInteraction.data.interactionId];
-        if (dialogue) {
-          this.dialogue.show(this.activeInteraction.data.targetName, dialogue.lines);
-        }
-      }
+    // ── Collision walls ───────────────────────────────────────────
+    const walls = this.physics.add.staticGroup();
+    for (const c of plazaMap.colliders) {
+      const rect = this.add.rectangle(
+        c.x + c.width / 2,
+        c.y + c.height / 2,
+        c.width,
+        c.height,
+        0x000000,
+        0,
+      );
+      this.physics.add.existing(rect, true);
+      walls.add(rect);
     }
 
-    if (this.dialogue.isVisible()) {
-      this.player.setVelocity(0, 0);
-      this.player.anims.stop();
-      return;
-    }
-
-    resolveMovement(this.player, this.movementKeys, this.cursorKeys);
-    this.player.setDepth(this.player.y);
-    this.refreshInteractionState();
-  }
-
-  private renderDecor(collisionLayer: Phaser.Physics.Arcade.StaticGroup) {
-    plazaMap.flowerBeds.forEach((p, i) => renderFlowerBed(this, p.x * TILE_SIZE, p.y * TILE_SIZE, i));
-    plazaMap.trees.forEach((p) => renderTree(this, p.x * TILE_SIZE, p.y * TILE_SIZE));
-    plazaMap.benches.forEach((p) => renderBench(this, p.x * TILE_SIZE, p.y * TILE_SIZE));
-    plazaMap.lamps.forEach((p) => renderLamp(this, p.x * TILE_SIZE, p.y * TILE_SIZE));
-
-    plazaMap.objects.forEach((object) => {
-      const worldX = object.x * TILE_SIZE;
-      const worldY = object.y * TILE_SIZE;
-      const width = object.width * TILE_SIZE;
-      const height = object.height * TILE_SIZE;
-
-      if (object.kind === "fountain") {
-        renderFountain(this, worldX, worldY, width, height);
-      }
-
-      if (object.kind === "building") {
-        renderBuilding(this, worldX, worldY, width, height, object.variant, object.label);
-      }
-
-      if (object.kind === "mailbox") {
-        renderMailbox(this, worldX, worldY, width, height);
-      }
-
-      if (object.solid) {
-        const collider = this.add.rectangle(worldX + width / 2, worldY + height / 2, width, height, 0x000000, 0);
-        this.physics.add.existing(collider, true);
-        collisionLayer.add(collider);
-      }
-    });
-  }
-
-  private createPlayer() {
-    const character = characters[this.session.characterId];
+    // ── Player ────────────────────────────────────────────────────
     const spawn = plazaMap.spawn[this.session.characterId];
+    const textureKey = `character-${this.session.characterId}`;
 
     this.player = this.physics.add
-      .sprite(spawn.x * TILE_SIZE + 8, spawn.y * TILE_SIZE + 8, character.textureKey, 0)
-      .setSize(12, 8)
-      .setOffset(2, 12);
+      .sprite(spawn.x, spawn.y, textureKey, 0)
+      .setSize(30, 20)
+      .setOffset(10, 28)
+      .setDepth(1);
 
-    this.player.setDepth(this.player.y);
     this.player.setCollideWorldBounds(true);
     this.player.setData("lastDirection", "down");
-  }
+    this.physics.add.collider(this.player, walls);
 
-  private createInteractions() {
-    this.interactions = plazaMap.interactions.map((interaction) =>
-      createInteractionPrompt(this, interaction, TILE_SIZE),
+    // ── Systems ───────────────────────────────────────────────────
+    this.dialogue = new DialogueController(this);
+    createAudioToggle(this);
+
+    this.interactions = plazaMap.interactions.map((zone) =>
+      createInteractionPrompt(this, zone, 1),
     );
-  }
 
-  private refreshInteractionState() {
-    let nextInteraction: ActiveInteraction | null = null;
-
-    this.interactions.forEach((interaction) => {
-      const overlaps = this.physics.overlap(this.player, interaction.zone);
-      interaction.prompt.setVisible(overlaps && !this.dialogue.isVisible());
-
-      if (overlaps) {
-        nextInteraction = interaction;
-      }
-    });
-
-    this.activeInteraction = nextInteraction;
-  }
-
-  private createCamera() {
-    this.cameras.main.setBounds(0, 0, plazaMap.width * TILE_SIZE, plazaMap.height * TILE_SIZE);
+    // ── Camera ────────────────────────────────────────────────────
+    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-    this.cameras.main.setZoom(1.5);
+    this.cameras.main.setZoom(1.0);
     this.cameras.main.setRoundPixels(true);
 
-    const vignette = this.add.rectangle(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2,
-      GAME_WIDTH,
-      GAME_HEIGHT,
-      0x04050b,
-      0.18,
-    );
-    vignette.setScrollFactor(0).setDepth(OVERLAY_DEPTH);
-    vignette.setBlendMode(Phaser.BlendModes.MULTIPLY);
-
-    // firefly dot texture
-    const dot = this.add.graphics();
-    dot.fillStyle(0xfff0b0, 1).fillCircle(2, 2, 2);
-    dot.generateTexture("firefly", 4, 4);
-    dot.destroy();
-
-    const emitter = this.add.particles(0, 0, "firefly", {
-      x: { min: 0, max: plazaMap.width * TILE_SIZE },
-      y: { min: 0, max: plazaMap.height * TILE_SIZE },
-      lifespan: 4000,
-      speedY: { min: -6, max: 6 },
-      speedX: { min: -6, max: 6 },
-      scale: { start: 0.8, end: 0 },
-      alpha: { start: 0.7, end: 0 },
-      frequency: 600,
-      quantity: 1,
-      blendMode: Phaser.BlendModes.ADD,
-    });
-    emitter.setDepth(LIGHT_DEPTH);
-  }
-
-  private createHud() {
-    this.add.rectangle(96, 15, 180, 18, 0x141029, 0.7).setScrollFactor(0).setDepth(UI_DEPTH);
-
+    // ── HUD ───────────────────────────────────────────────────────
     this.add
       .text(12, 10, `${this.session.displayName} en la plaza`, {
         fontFamily: "monospace",
@@ -217,7 +103,7 @@ export class PlazaScene extends Phaser.Scene {
       .setDepth(UI_DEPTH);
 
     this.add
-      .text(12, 24, "Mover: WASD/Flechas  Interactuar: E", {
+      .text(12, 24, "Mover: WASD/Flechas  Interactuar: E  Tirar: F", {
         fontFamily: "monospace",
         fontSize: "9px",
         color: "#d4caef",
@@ -226,18 +112,58 @@ export class PlazaScene extends Phaser.Scene {
       .setDepth(UI_DEPTH);
   }
 
-  private startPlaceholderMusic() {
-    const music = musicTracks.plazaNight;
+  update() {
+    // ── Interact / advance dialogue ────────────────────────────────
+    if (
+      Phaser.Input.Keyboard.JustDown(this.interactKey) ||
+      Phaser.Input.Keyboard.JustDown(this.enterKey)
+    ) {
+      if (this.dialogue.isVisible()) {
+        this.dialogue.advance();
+        return;
+      }
+      if (this.activeInteraction) {
+        const entry = dialogues[this.activeInteraction.data.interactionId];
+        if (entry) {
+          this.dialogue.show(this.activeInteraction.data.targetName, entry.lines);
+        }
+      }
+    }
 
-    this.add
-      .text(GAME_WIDTH - 12, GAME_HEIGHT - 84, `Audio: ${music.title} placeholder`, {
-        fontFamily: "monospace",
-        fontSize: "8px",
-        color: "#c3b9d9",
-        align: "right",
-      })
-      .setOrigin(1, 0)
-      .setScrollFactor(0)
-      .setDepth(UI_DEPTH);
+    // ── Guille floor toggle ────────────────────────────────────────
+    if (
+      Phaser.Input.Keyboard.JustDown(this.floorKey) &&
+      this.session.characterId === "guillermo"
+    ) {
+      this.guilleFloorActive = !this.guilleFloorActive;
+      if (this.guilleFloorActive) {
+        this.player.setTexture("guille-piso");
+        this.player.anims.stop();
+        this.player.setVelocity(0, 0);
+      } else {
+        this.player.setTexture("character-guillermo");
+      }
+    }
+
+    // ── Block input while floor mode or dialogue active ────────────
+    if (this.dialogue.isVisible() || this.guilleFloorActive) {
+      this.player.setVelocity(0, 0);
+      if (!this.guilleFloorActive) this.player.anims.stop();
+      return;
+    }
+
+    // ── Movement ──────────────────────────────────────────────────
+    resolveMovement(this.player, this.movementKeys, this.cursorKeys);
+    this.refreshInteractionState();
+  }
+
+  private refreshInteractionState() {
+    let next: ActiveInteraction | null = null;
+    for (const interaction of this.interactions) {
+      const overlaps = this.physics.overlap(this.player, interaction.zone);
+      interaction.prompt.setVisible(overlaps && !this.dialogue.isVisible());
+      if (overlaps) next = interaction;
+    }
+    this.activeInteraction = next;
   }
 }
