@@ -43,6 +43,30 @@ export const dialogues: Record<string, DialogueEntry> = {
       "Mas adelante va a servir para mandar mensajes dentro de este regalo.",
     ],
   },
+  "castle-entrance": {
+    id: "castle-entrance",
+    lines: ["La entrada al castillo..."],
+  },
+  "entrada-izq": {
+    id: "entrada-izq",
+    lines: ["Entrada izquierda..."],
+  },
+  "discoteca": {
+    id: "discoteca",
+    lines: ["La discoteca..."],
+  },
+  "entrada-der": {
+    id: "entrada-der",
+    lines: ["Entrada derecha..."],
+  },
+  "zona-sur-der": {
+    id: "zona-sur-der",
+    lines: ["Zona sur-derecha..."],
+  },
+  "fondo-sur": {
+    id: "fondo-sur",
+    lines: ["El campamento..."],
+  },
 };
 
 // PLACEHOLDER — Guillermo: personalizar este texto del cartel de la fuente.
