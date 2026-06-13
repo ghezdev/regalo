@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { dialogues } from "../data/dialogues";
-import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SPEED, WORLD_WIDTH, WORLD_HEIGHT } from "../config";
+import { WORLD_WIDTH, WORLD_HEIGHT } from "../config";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
 import { DialogueController } from "../systems/dialogue";
