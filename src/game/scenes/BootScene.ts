@@ -25,6 +25,16 @@ export class BootScene extends Phaser.Scene {
 
     // Guille floor sprite
     this.load.image("guille-piso", "/sprites/personajes/guille_piso.png");
+
+    // Interior backgrounds
+    this.load.image("bg-castillo", "/sprites/interiores/castillo.png");
+    this.load.image("bg-casa-pensamientos", "/sprites/interiores/casa%20de%20los%20recuerdos.png");
+    this.load.image("bg-discoteca", "/sprites/interiores/discoteca.png");
+    this.load.image("bg-casa", "/sprites/interiores/casa.jpg");
+
+    // Button sprites
+    this.load.image("tecla", "/sprites/botones/tecla.png");
+    this.load.image("tecla-presionada", "/sprites/botones/tecla_presionada.webp");
   }
 
   create() {
