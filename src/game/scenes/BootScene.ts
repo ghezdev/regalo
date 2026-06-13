@@ -1,9 +1,5 @@
 import * as Phaser from "phaser";
-import { characters } from "../data/characters";
 import type { GameSession } from "../types/game";
-
-const SKY_TOP = 0x0d1330;
-const SKY_BOTTOM = 0x24153b;
 
 export class BootScene extends Phaser.Scene {
   private session!: GameSession;
@@ -17,122 +13,76 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    this.generateCharacterSheet("character-naomi", {
-      hair: 0x6b295f,
-      outfit: 0xf2b6d8,
-      accent: 0xfff0f4,
-    });
-    this.generateCharacterSheet("character-guillermo", {
-      hair: 0x47311d,
-      outfit: 0x7aa2f7,
-      accent: 0xf4e6d0,
-    });
+    // Background
+    this.load.image("plaza-bg", "/sprites/regalo%20naomi%20plaza.webp");
+
+    // Character frames: naomi_01..16, guille_01..16
+    for (let i = 1; i <= 16; i++) {
+      const pad = String(i).padStart(2, "0");
+      this.load.image(`naomi-f${pad}`, `/sprites/personajes/naomi_${pad}.png`);
+      this.load.image(`guille-f${pad}`, `/sprites/personajes/guille_${pad}.png`);
+    }
+
+    // Guille floor sprite
+    this.load.image("guille-piso", "/sprites/personajes/guille_piso.png");
   }
 
   create() {
-    this.createCharacterAnimations();
+    this.buildSpritesheet("character-naomi", "naomi-f");
+    this.buildSpritesheet("character-guillermo", "guille-f");
+    this.createAnimations();
     this.scene.start("plaza", { session: this.session });
   }
 
-  private createCharacterAnimations() {
-    Object.values(characters).forEach((character) => {
-      ["down", "left", "right", "up"].forEach((direction, index) => {
-        const animationKey = `${character.textureKey}-${direction}`;
-        if (this.anims.exists(animationKey)) {
-          return;
-        }
+  private buildSpritesheet(textureKey: string, framePrefix: string) {
+    const FRAME_W = 50;
+    const FRAME_H = 50;
+    const TOTAL = 16;
 
+    const canvas = this.textures.createCanvas(textureKey, FRAME_W * TOTAL, FRAME_H);
+    if (!canvas) throw new Error(`Cannot create canvas for ${textureKey}`);
+
+    const ctx = canvas.getContext();
+
+    for (let i = 0; i < TOTAL; i++) {
+      const key = `${framePrefix}${String(i + 1).padStart(2, "0")}`;
+      const src = this.textures.get(key).getSourceImage() as HTMLImageElement;
+      ctx.drawImage(src, i * FRAME_W, 0, FRAME_W, FRAME_H);
+    }
+
+    canvas.refresh();
+
+    for (let i = 0; i < TOTAL; i++) {
+      canvas.add(i, 0, i * FRAME_W, 0, FRAME_W, FRAME_H);
+    }
+  }
+
+  private createAnimations() {
+    const chars = [
+      { textureKey: "character-naomi" },
+      { textureKey: "character-guillermo" },
+    ];
+    const directions = ["down", "left", "right", "up"] as const;
+
+    for (const { textureKey } of chars) {
+      for (let d = 0; d < directions.length; d++) {
+        const key = `${textureKey}-${directions[d]}`;
+        if (this.anims.exists(key)) continue;
         this.anims.create({
-          key: animationKey,
-          frames: this.anims.generateFrameNumbers(character.textureKey, {
-            start: index * 4,
-            end: index * 4 + 3,
+          key,
+          frames: this.anims.generateFrameNumbers(textureKey, {
+            start: d * 4,
+            end: d * 4 + 3,
           }),
           frameRate: 8,
           repeat: -1,
         });
-      });
-    });
-  }
-
-  private generateCharacterSheet(
-    key: string,
-    palette: { hair: number; outfit: number; accent: number },
-  ) {
-    const frameWidth = 16;
-    const frameHeight = 20;
-    const totalFrames = 16;
-    const canvas = this.textures.createCanvas(key, frameWidth * totalFrames, frameHeight);
-
-    if (!canvas) {
-      throw new Error(`Unable to create texture canvas for ${key}.`);
-    }
-
-    const context = canvas.getContext();
-    const directions = ["down", "left", "right", "up"] as const;
-
-    directions.forEach((direction, directionIndex) => {
-      for (let walkFrame = 0; walkFrame < 4; walkFrame += 1) {
-        const frameIndex = directionIndex * 4 + walkFrame;
-        const offsetX = frameIndex * frameWidth;
-
-        context.clearRect(offsetX, 0, frameWidth, frameHeight);
-        context.fillStyle = "#00000000";
-        context.fillRect(offsetX, 0, frameWidth, frameHeight);
-
-        const bob = walkFrame % 2 === 0 ? 0 : 1;
-        const armOffset = walkFrame % 2 === 0 ? 1 : -1;
-
-        this.drawPixelRect(context, offsetX + 5, 2, 6, 3, palette.hair);
-        this.drawPixelRect(context, offsetX + 4, 5, 8, 5, 0xf4cfb4);
-        this.drawPixelRect(context, offsetX + 5, 9, 6, 5, palette.outfit);
-        this.drawPixelRect(context, offsetX + 4 + armOffset, 10, 1, 4, palette.accent);
-        this.drawPixelRect(context, offsetX + 11 - armOffset, 10, 1, 4, palette.accent);
-
-        if (direction === "up") {
-          this.drawPixelRect(context, offsetX + 6, 5, 4, 1, palette.hair);
-        } else if (direction === "left") {
-          this.drawPixelRect(context, offsetX + 4, 6, 1, 1, 0x221611);
-        } else if (direction === "right") {
-          this.drawPixelRect(context, offsetX + 11, 6, 1, 1, 0x221611);
-        } else {
-          this.drawPixelRect(context, offsetX + 6, 6, 1, 1, 0x221611);
-          this.drawPixelRect(context, offsetX + 9, 6, 1, 1, 0x221611);
-        }
-
-        this.drawPixelRect(context, offsetX + 5, 14 + bob, 2, 5, 0x2a2532);
-        this.drawPixelRect(context, offsetX + 9, 14 - bob, 2, 5, 0x2a2532);
       }
-    });
-
-    canvas.refresh();
-
-    for (let frameIndex = 0; frameIndex < totalFrames; frameIndex += 1) {
-      canvas.add(
-        frameIndex,
-        0,
-        frameIndex * frameWidth,
-        0,
-        frameWidth,
-        frameHeight,
-      );
     }
-  }
-
-  private drawPixelRect(
-    context: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    color: number,
-  ) {
-    context.fillStyle = Phaser.Display.Color.IntegerToColor(color).rgba;
-    context.fillRect(x, y, width, height);
   }
 }
 
 export const BOOT_SCENE_COLORS = {
-  SKY_TOP,
-  SKY_BOTTOM,
+  SKY_TOP: 0x0d1330,
+  SKY_BOTTOM: 0x24153b,
 };
