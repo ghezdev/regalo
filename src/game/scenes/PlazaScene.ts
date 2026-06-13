@@ -1,14 +1,14 @@
 import * as Phaser from "phaser";
 import { dialogues } from "../data/dialogues";
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../config";
+import { plazaUi } from "../data/ui";
 import { plazaMap } from "../data/maps/plaza";
 import { createAudioToggle } from "../systems/audio";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
 import type { GameSession } from "../types/game";
-
-const UI_DEPTH = 100;
+import { setOverlayHud, setOverlayLabels } from "../ui-overlay-store";
 
 interface PlazaSceneData {
   session: GameSession;
@@ -26,6 +26,13 @@ export class PlazaScene extends Phaser.Scene {
   private interactions: ActiveInteraction[] = [];
   private activeInteraction: ActiveInteraction | null = null;
   private guilleFloorActive = false;
+
+  private static readonly INTERIOR_MAP: Record<string, string> = {
+    "castle-entrance": "castillo",
+    "entrada-izq": "casa-pensamientos",
+    "discoteca": "discoteca",
+    "zona-sur-der": "casa",
+  };
 
   constructor() {
     super("plaza");
@@ -79,37 +86,18 @@ export class PlazaScene extends Phaser.Scene {
     this.physics.add.collider(this.player, walls);
 
     // ── Systems ───────────────────────────────────────────────────
-    this.dialogue = new DialogueController(this);
+    this.dialogue = new DialogueController();
     createAudioToggle(this);
 
-    this.interactions = plazaMap.interactions.map((zone) =>
-      createInteractionPrompt(this, zone, 1),
-    );
+    this.interactions = plazaMap.interactions.map((zone) => createInteractionPrompt(this, zone, 1));
+    setOverlayHud({ movementHint: plazaUi.movementHint });
 
     // ── Camera ────────────────────────────────────────────────────
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.cameras.main.setZoom(1.0);
     this.cameras.main.setRoundPixels(true);
-
-    // ── HUD ───────────────────────────────────────────────────────
-    this.add
-      .text(12, 10, `${this.session.displayName} en la plaza`, {
-        fontFamily: "monospace",
-        fontSize: "10px",
-        color: "#f6f3ff",
-      })
-      .setScrollFactor(0)
-      .setDepth(UI_DEPTH);
-
-    this.add
-      .text(12, 24, "Mover: WASD/Flechas  Interactuar: E  Tirar: F", {
-        fontFamily: "monospace",
-        fontSize: "9px",
-        color: "#d4caef",
-      })
-      .setScrollFactor(0)
-      .setDepth(UI_DEPTH);
+    this.cameras.main.fadeIn(300, 0, 0, 0);
   }
 
   update() {
@@ -123,6 +111,11 @@ export class PlazaScene extends Phaser.Scene {
         return;
       }
       if (this.activeInteraction) {
+        const interiorId = PlazaScene.INTERIOR_MAP[this.activeInteraction.data.interactionId];
+        if (interiorId) {
+          this.triggerEnterInterior(interiorId);
+          return;
+        }
         const entry = dialogues[this.activeInteraction.data.interactionId];
         if (entry) {
           this.dialogue.show(this.activeInteraction.data.targetName, entry.lines);
@@ -149,6 +142,7 @@ export class PlazaScene extends Phaser.Scene {
     if (this.dialogue.isVisible() || this.guilleFloorActive) {
       this.player.setVelocity(0, 0);
       if (!this.guilleFloorActive) this.player.anims.stop();
+      this.refreshInteractionState(true);
       return;
     }
 
@@ -157,13 +151,46 @@ export class PlazaScene extends Phaser.Scene {
     this.refreshInteractionState();
   }
 
-  private refreshInteractionState() {
+  private refreshInteractionState(forceHide = false) {
     let next: ActiveInteraction | null = null;
+    const camera = this.cameras.main;
+    const zoom = camera.zoom;
+    const labels = [];
+
     for (const interaction of this.interactions) {
       const overlaps = this.physics.overlap(this.player, interaction.zone);
-      interaction.prompt.setVisible(overlaps && !this.dialogue.isVisible());
-      if (overlaps) next = interaction;
+      const screenX = (interaction.anchorX - camera.worldView.x) * zoom;
+      const screenY = (interaction.anchorY - camera.worldView.y) * zoom;
+      const visible =
+        !forceHide &&
+        !this.dialogue.isVisible() &&
+        screenX >= 0 &&
+        screenX <= camera.width &&
+        screenY >= 0 &&
+        screenY <= camera.height;
+
+      labels.push({
+        id: interaction.data.id,
+        text: interaction.data.label,
+        x: screenX,
+        y: screenY,
+        visible,
+        active: overlaps,
+      });
+
+      if (overlaps) {
+        next = interaction;
+      }
     }
+
     this.activeInteraction = next;
+    setOverlayLabels(labels);
+  }
+
+  private triggerEnterInterior(interiorId: string) {
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.start("interior", { interiorId, session: this.session });
+    });
   }
 }
