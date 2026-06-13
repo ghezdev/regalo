@@ -88,3 +88,28 @@ export interface ImagePlazaMap {
   colliders: ImageMapCollider[];
   interactions: MapInteraction[];
 }
+
+export interface ButtonDefinition {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface ColliderRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface InteriorDefinition {
+  id: string;
+  bgKey: string;
+  worldWidth: number;
+  worldHeight: number;
+  colliders: ColliderRect[];
+  exitZone: ColliderRect;
+  buttons?: ButtonDefinition[];
+}
