@@ -73,3 +73,18 @@ export interface PlazaMapDefinition {
   objects: MapRectObject[];
   interactions: MapInteraction[];
 }
+
+export interface ImageMapCollider {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface ImagePlazaMap {
+  width: number;
+  height: number;
+  spawn: Record<string, { x: number; y: number }>;
+  colliders: ImageMapCollider[];
+  interactions: MapInteraction[];
+}
