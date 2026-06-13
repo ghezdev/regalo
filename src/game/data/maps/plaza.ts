@@ -1,204 +1,95 @@
-import type { PlazaMapDefinition } from "../../types/content";
+import type { ImagePlazaMap } from "../../types/content";
+import { WORLD_WIDTH, WORLD_HEIGHT } from "../../config";
 
-// The plaza is a 40x26 grid. Grass is walkable (no collision), so paths are
-// purely decorative guidance. The fountain sits dead-centre (tiles 17-22 x,
-// 10-15 y -> centre 20,13) on a paved square, with a path cross radiating out
-// and buildings framing the perimeter. Decor is clustered around the centre so
-// the opening view (follow-camera at zoom 1.5) feels full and romantic.
+// All coordinates are world pixels (image is 2009×1273).
+// Collider values are initial approximations — calibrate by running the game.
+export const plazaMap: ImagePlazaMap = {
+  width: WORLD_WIDTH,
+  height: WORLD_HEIGHT,
 
-const pathPoints = [
-  // paved plaza square around the fountain (x16..23, y9..16)
-  ...Array.from({ length: 8 * 8 }, (_, i) => ({ x: 16 + (i % 8), y: 9 + Math.floor(i / 8) })),
-  // vertical avenue (x19, x20) full height
-  ...Array.from({ length: 26 }, (_, y) => ({ x: 19, y })),
-  ...Array.from({ length: 26 }, (_, y) => ({ x: 20, y })),
-  // horizontal avenue (y12, y13) full width
-  ...Array.from({ length: 40 }, (_, x) => ({ x, y: 12 })),
-  ...Array.from({ length: 40 }, (_, x) => ({ x, y: 13 })),
-];
-
-export const plazaMap: PlazaMapDefinition = {
-  id: "plaza",
-  tileSize: 16,
-  width: 40,
-  height: 26,
   spawn: {
-    naomi: { x: 18, y: 17 },
-    guillermo: { x: 21, y: 17 },
+    naomi: { x: 1420, y: 350 },
+    guillermo: { x: 1400, y: 1180 },
   },
-  paths: pathPoints,
-  flowerBeds: [
-    // ring just outside the paved plaza square
-    { x: 16, y: 8 },
-    { x: 18, y: 8 },
-    { x: 21, y: 8 },
-    { x: 23, y: 8 },
-    { x: 15, y: 10 },
-    { x: 24, y: 10 },
-    { x: 15, y: 15 },
-    { x: 24, y: 15 },
-    { x: 16, y: 17 },
-    { x: 18, y: 17 },
-    { x: 21, y: 17 },
-    { x: 23, y: 17 },
-    // accents along the avenues
-    { x: 11, y: 11 },
-    { x: 28, y: 11 },
-    { x: 11, y: 14 },
-    { x: 28, y: 14 },
+
+  // Thin wall rectangles tracing the white boundary from LIMITES v2.png.
+  colliders: [
+    // ── Horizontal path ──────────────────────────────
+    { x: 293,  y: 531,  width: 10,  height: 170 }, // left cap
+    { x: 303,  y: 531,  width: 1052, height: 10 }, // top wall (up to upper-right path)
+    { x: 293,  y: 691,  width: 970, height: 10  }, // bottom wall
+    // ── Upper-right path (to castle) ─────────────────
+    { x: 1355, y: 253,  width: 82,  height: 10  }, // top cap
+    { x: 1355, y: 263,  width: 10,  height: 278 }, // left wall
+    { x: 1437, y: 263,  width: 10,  height: 278 }, // right wall
+    // ── Right building zone ───────────────────────────
+    { x: 1129, y: 253,  width: 226, height: 10  }, // top-left of right zone
+    { x: 1585, y: 253,  width: 74,  height: 10  }, // top-right of right zone
+    { x: 1649, y: 263,  width: 10,  height: 300 }, // far-right wall
+    // ── Right connector (x:1526-1669, y:552-700) ─────
+    { x: 1526, y: 552,  width: 143, height: 10  }, // top
+    { x: 1659, y: 552,  width: 10,  height: 148 }, // right wall
+    // ── Lower section left wall ───────────────────────
+    { x: 1353, y: 700,  width: 10,  height: 572 }, // left wall going down
+    // ── Top connector of lower section ───────────────
+    { x: 1434, y: 698,  width: 10,  height: 84  }, // left side
+    { x: 1623, y: 698,  width: 10,  height: 84  }, // right side
+    { x: 1434, y: 782,  width: 199, height: 10  }, // bottom of connector
+    // ── Right wall of lower section (diagonal approx) ─
+    { x: 1572, y: 776,  width: 135, height: 10  }, // top
+    { x: 1697, y: 786,  width: 10,  height: 350 }, // right wall
+    { x: 1572, y: 1136, width: 135, height: 10  }, // bottom
+    // ── South / campsite section ──────────────────────
+    { x: 1440, y: 1073, width: 137, height: 10  }, // top
+    { x: 1440, y: 1083, width: 10,  height: 188 }, // left wall
+    { x: 1567, y: 1083, width: 10,  height: 188 }, // right wall
+    { x: 1440, y: 1261, width: 137, height: 10  }, // bottom
+    // ── Small fragment (right area) ───────────────────
+    { x: 1631, y: 771,  width: 29,  height: 7   },
   ],
-  lamps: [
-    // corners of the paved plaza
-    { x: 15, y: 8 },
-    { x: 24, y: 8 },
-    { x: 15, y: 16 },
-    { x: 24, y: 16 },
-    // along the avenues, further out
-    { x: 19, y: 4 },
-    { x: 19, y: 21 },
-    { x: 8, y: 12 },
-    { x: 31, y: 12 },
-  ],
-  trees: [
-    { x: 12, y: 7 },
-    { x: 27, y: 7 },
-    { x: 12, y: 18 },
-    { x: 27, y: 18 },
-    { x: 3, y: 13 },
-    { x: 36, y: 13 },
-  ],
-  benches: [
-    { x: 17, y: 16 },
-    { x: 22, y: 16 },
-    { x: 16, y: 9 },
-    { x: 22, y: 9 },
-  ],
-  objects: [
-    {
-      id: "fountain",
-      kind: "fountain",
-      x: 17,
-      y: 10,
-      width: 6,
-      height: 6,
-      solid: true,
-      label: "Fuente de la plaza",
-    },
-    {
-      id: "home-building",
-      kind: "building",
-      x: 15,
-      y: 1,
-      width: 11,
-      height: 5,
-      solid: true,
-      variant: "home",
-      label: "Nuestra casa",
-    },
-    {
-      id: "dance-room-building",
-      kind: "building",
-      x: 3,
-      y: 3,
-      width: 7,
-      height: 5,
-      solid: true,
-      variant: "dance",
-      label: "Pista de baile",
-    },
-    {
-      id: "photo-room-building",
-      kind: "building",
-      x: 30,
-      y: 3,
-      width: 7,
-      height: 5,
-      solid: true,
-      variant: "photos",
-      label: "Habitacion de fotos",
-    },
-    {
-      id: "audio-room-building",
-      kind: "building",
-      x: 3,
-      y: 18,
-      width: 7,
-      height: 5,
-      solid: true,
-      variant: "audio",
-      label: "Calendario de audios",
-    },
-    {
-      id: "mailbox",
-      kind: "mailbox",
-      x: 32,
-      y: 19,
-      width: 2,
-      height: 2,
-      solid: true,
-      label: "Buzon",
-    },
-  ],
+
   interactions: [
     {
-      id: "fountain-interaction",
+      id: "castle-entrance",
       label: "E",
-      targetName: "Fuente",
-      x: 19,
-      y: 16,
-      width: 2,
-      height: 1,
-      interactionId: "fountain-message",
+      targetName: "Entrada al castillo",
+      x: 1380, y: 340, width: 80, height: 40,
+      interactionId: "castle-entrance",
     },
     {
-      id: "home-door",
+      id: "entrada-izq",
       label: "E",
-      targetName: "Nuestra casa",
-      x: 19,
-      y: 6,
-      width: 2,
-      height: 1,
-      interactionId: "home-closed",
+      targetName: "Entrada izquierda",
+      x: 370, y: 545, width: 45, height: 30,
+      interactionId: "entrada-izq",
     },
     {
-      id: "dance-room-door",
+      id: "discoteca",
       label: "E",
-      targetName: "Pista de baile",
-      x: 5,
-      y: 8,
-      width: 2,
-      height: 1,
-      interactionId: "dance-room-closed",
+      targetName: "Discoteca",
+      x: 1120, y: 550, width: 50, height: 30,
+      interactionId: "discoteca",
     },
     {
-      id: "photo-room-door",
+      id: "entrada-der",
       label: "E",
-      targetName: "Habitacion de fotos",
-      x: 32,
-      y: 8,
-      width: 2,
-      height: 1,
-      interactionId: "photo-room-closed",
+      targetName: "Entrada derecha",
+      x: 1630, y: 545, width: 45, height: 30,
+      interactionId: "entrada-der",
     },
     {
-      id: "audio-room-door",
+      id: "zona-sur-der",
       label: "E",
-      targetName: "Calendario de audios",
-      x: 5,
-      y: 23,
-      width: 2,
-      height: 1,
-      interactionId: "audio-calendar-closed",
+      targetName: "Zona sur-derecha",
+      x: 1620, y: 775, width: 50, height: 30,
+      interactionId: "zona-sur-der",
     },
     {
-      id: "mailbox-interaction",
+      id: "fondo-sur",
       label: "E",
-      targetName: "Buzon",
-      x: 30,
-      y: 20,
-      width: 2,
-      height: 2,
-      interactionId: "mailbox-placeholder",
+      targetName: "Campamento",
+      x: 1360, y: 1245, width: 80, height: 30,
+      interactionId: "fondo-sur",
     },
   ],
 };
