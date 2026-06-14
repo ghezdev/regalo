@@ -7,6 +7,7 @@ export const users = [
   },
   {
     username: "guillermo",
+    aliases: ["guille"],
     password: "maia",
     displayName: "Guillermo",
     characterId: "guillermo",

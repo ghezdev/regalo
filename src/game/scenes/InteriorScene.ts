@@ -3,8 +3,8 @@ import type { GameSession, Direction, PlayerUpdate } from "../types/game";
 import type { MultiplayerClient } from "../systems/multiplayer";
 import { interiors } from "../data/maps/interiors";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
-import { setOverlayLabels, setOverlayHud, setAudioLabel, setDiscoAudioOpen } from "../ui-overlay-store";
-import { createAudioToggle } from "../systems/audio";
+import { setOverlayLabels, setOverlayHud, setAudioLabel, setDiscoAudioOpen, setCineVideoOpen } from "../ui-overlay-store";
+import { createAudioToggle, pauseAmbientMusic, resumeAmbientMusic } from "../systems/audio";
 import { ButtonAudioSystem } from "../systems/button-audio";
 import { audioCalendar, getAudioForButton } from "../data/audio-calendar";
 import type { AudioCalendarEntry } from "../types/content";
@@ -12,6 +12,7 @@ import type { AudioCalendarEntry } from "../types/content";
 interface InteriorSceneData {
   interiorId: string;
   session: GameSession;
+  spawnOverride?: { x: number; y: number };
 }
 
 const INTERIOR_WALL_THICKNESS = 16;
@@ -135,6 +136,7 @@ function buildWalkableBoundaryColliders(walkableZones: typeof interiors.castillo
 export class InteriorScene extends Phaser.Scene {
   private session!: GameSession;
   private interiorId!: string;
+  private spawnOverride: { x: number; y: number } | undefined;
   private interiorDef = interiors.castillo;
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursorKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -156,6 +158,7 @@ export class InteriorScene extends Phaser.Scene {
   init(data: InteriorSceneData) {
     this.interiorId = data.interiorId;
     this.session = data.session;
+    this.spawnOverride = data.spawnOverride;
   }
 
   preload() {
@@ -178,8 +181,14 @@ export class InteriorScene extends Phaser.Scene {
     setOverlayHud({ movementHint: "" });
     setAudioLabel(null);
 
+    pauseAmbientMusic();
+
     if (this.interiorId === "discoteca") {
       setDiscoAudioOpen(true);
+    }
+
+    if (this.interiorId === "cine") {
+      setCineVideoOpen(true);
     }
 
     // World
@@ -212,9 +221,9 @@ export class InteriorScene extends Phaser.Scene {
     );
     this.physics.add.existing(this.exitZone, true);
 
-    // Player — spawn at exit zone center
-    const spawnX = def.exitZone.x + def.exitZone.width / 2;
-    const spawnY = def.exitZone.y + def.exitZone.height / 2;
+    // Player — spawn at override position or exit zone center
+    const spawnX = this.spawnOverride?.x ?? def.exitZone.x + def.exitZone.width / 2;
+    const spawnY = this.spawnOverride?.y ?? def.exitZone.y + def.exitZone.height / 2;
     const textureKey = `character-${this.session.characterId}`;
     this.player = this.physics.add
       .sprite(spawnX, spawnY, textureKey, 0)
@@ -272,7 +281,9 @@ export class InteriorScene extends Phaser.Scene {
     });
 
     this.events.on("shutdown", () => {
-setDiscoAudioOpen(false);
+      setDiscoAudioOpen(false);
+      setCineVideoOpen(false);
+      resumeAmbientMusic();
     });
   }
 
@@ -396,6 +407,8 @@ setDiscoAudioOpen(false);
     this.buttonAudio.destroy();
     setAudioLabel(null);
     setDiscoAudioOpen(false);
+    setCineVideoOpen(false);
+    resumeAmbientMusic();
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.start("plaza", { session: this.session, fromInterior: this.interiorId });

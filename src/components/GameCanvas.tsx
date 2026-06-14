@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GameOverlay } from "@/components/GameOverlay";
 import type { Session } from "@/lib/session";
+import { GAME_HEIGHT, GAME_WIDTH } from "@/game/config";
 
 type PhaserGame = {
   destroy: (removeCanvas?: boolean) => void;
@@ -10,13 +12,43 @@ type PhaserGame = {
 type CreateGame = (container: HTMLDivElement, session: Session) => PhaserGame;
 
 type GameCanvasProps = {
+  onReady?: () => void;
   session: Session;
 };
 
-export function GameCanvas({ session }: GameCanvasProps) {
+function getCanvasDisplayScale(width: number, height: number) {
+  const fitScale = Math.min(width / GAME_WIDTH, height / GAME_HEIGHT);
+
+  if (fitScale < 1) {
+    return fitScale;
+  }
+
+  return Math.max(1, Math.floor(fitScale));
+}
+
+export function GameCanvas({ onReady, session }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const onReadyRef = useRef<GameCanvasProps["onReady"]>(onReady);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState("Cargando escena...");
+  const [displayScale, setDisplayScale] = useState(1);
+
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
+
+  useEffect(() => {
+    const updateDisplayScale = () => {
+      setDisplayScale(getCanvasDisplayScale(window.innerWidth, window.innerHeight));
+    };
+
+    updateDisplayScale();
+    window.addEventListener("resize", updateDisplayScale);
+
+    return () => {
+      window.removeEventListener("resize", updateDisplayScale);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +80,11 @@ export function GameCanvas({ session }: GameCanvasProps) {
 
         currentGame = gameModule.createGame(container, session);
         setStatus("ready");
+        requestAnimationFrame(() => {
+          if (!cancelled) {
+            onReadyRef.current?.();
+          }
+        });
       } catch (error) {
         console.error("Game bootstrap failed", error);
 
@@ -69,13 +106,22 @@ export function GameCanvas({ session }: GameCanvasProps) {
 
   return (
     <div className="canvas-shell">
-      <div className="canvas-root" ref={containerRef} />
+      <div
+        className="game-stage"
+        style={{
+          width: `${GAME_WIDTH * displayScale}px`,
+          height: `${GAME_HEIGHT * displayScale}px`,
+        }}
+      >
+        <div className="canvas-root" ref={containerRef} />
+        <GameOverlay displayScale={displayScale} />
         {status !== "ready" ? (
           <div className="loading-state canvas-loading-state">
             <div className="spinner" />
             <p className="hud-text">{message}</p>
           </div>
         ) : null}
+      </div>
     </div>
   );
 }

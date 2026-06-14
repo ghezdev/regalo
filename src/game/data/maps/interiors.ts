@@ -1,5 +1,28 @@
 import type { InteriorDefinition } from "../../types/content";
 
+function createButtonGrid(
+  startX: number,
+  startY: number,
+  columns: number,
+  rows: number,
+  gapX: number,
+  gapY: number,
+  buttonSize: number,
+) {
+  return Array.from({ length: rows * columns }, (_, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+
+    return {
+      id: `btn-r${row}-c${column}`,
+      x: startX + column * gapX,
+      y: startY + row * gapY,
+      width: buttonSize,
+      height: buttonSize,
+    };
+  });
+}
+
 export const interiors: Record<string, InteriorDefinition> = {
   castillo: {
     id: "castillo",
@@ -7,8 +30,13 @@ export const interiors: Record<string, InteriorDefinition> = {
     worldWidth: 1916,
     worldHeight: 821,
     colliders: [],
-    // Línea amarilla al extremo derecho del corredor largo
-    exitZone: { x: 1680, y: 300, width: 110, height: 45 },
+    walkableZones: [
+      // Habitación izquierda (dormitorio con cama y peluches)
+      { x: 140, y: 337, width: 239, height: 231 },
+      // Corredor principal largo
+      { x: 379, y: 362, width: 1494, height: 205 },
+    ],
+    exitZone: { x: 1750, y: 381, width: 79, height: 37 },
   },
 
   "casa-pensamientos": {
@@ -17,51 +45,16 @@ export const interiors: Record<string, InteriorDefinition> = {
     worldWidth: 1448,
     worldHeight: 1086,
     colliders: [],
+    walkableZones: [
+      { x: 232, y: 326, width: 976, height: 477 },
+      { x: 231, y: 803, width: 415, height: 78 },
+      { x: 792, y: 803, width: 416, height: 78 },
+      { x: 645, y: 803, width: 147, height: 260 },
+    ],
     // Línea amarilla al centro-bajo de la sala
     exitZone: { x: 585, y: 1010, width: 170, height: 50 },
-    buttons: [
-      // 7 columnas × 5 filas — posiciones estimadas desde imagen de referencia, refinar con physics debug
-      // Fila 0 (y≈293)
-      { id: "btn-r0-c0", x: 288, y: 263, width: 60, height: 60 },
-      { id: "btn-r0-c1", x: 433, y: 263, width: 60, height: 60 },
-      { id: "btn-r0-c2", x: 578, y: 263, width: 60, height: 60 },
-      { id: "btn-r0-c3", x: 723, y: 263, width: 60, height: 60 },
-      { id: "btn-r0-c4", x: 868, y: 263, width: 60, height: 60 },
-      { id: "btn-r0-c5", x: 1013, y: 263, width: 60, height: 60 },
-      { id: "btn-r0-c6", x: 1158, y: 263, width: 60, height: 60 },
-      // Fila 1 (y≈448)
-      { id: "btn-r1-c0", x: 288, y: 418, width: 60, height: 60 },
-      { id: "btn-r1-c1", x: 433, y: 418, width: 60, height: 60 },
-      { id: "btn-r1-c2", x: 578, y: 418, width: 60, height: 60 },
-      { id: "btn-r1-c3", x: 723, y: 418, width: 60, height: 60 },
-      { id: "btn-r1-c4", x: 868, y: 418, width: 60, height: 60 },
-      { id: "btn-r1-c5", x: 1013, y: 418, width: 60, height: 60 },
-      { id: "btn-r1-c6", x: 1158, y: 418, width: 60, height: 60 },
-      // Fila 2 (y≈603)
-      { id: "btn-r2-c0", x: 288, y: 573, width: 60, height: 60 },
-      { id: "btn-r2-c1", x: 433, y: 573, width: 60, height: 60 },
-      { id: "btn-r2-c2", x: 578, y: 573, width: 60, height: 60 },
-      { id: "btn-r2-c3", x: 723, y: 573, width: 60, height: 60 },
-      { id: "btn-r2-c4", x: 868, y: 573, width: 60, height: 60 },
-      { id: "btn-r2-c5", x: 1013, y: 573, width: 60, height: 60 },
-      { id: "btn-r2-c6", x: 1158, y: 573, width: 60, height: 60 },
-      // Fila 3 (y≈758)
-      { id: "btn-r3-c0", x: 288, y: 728, width: 60, height: 60 },
-      { id: "btn-r3-c1", x: 433, y: 728, width: 60, height: 60 },
-      { id: "btn-r3-c2", x: 578, y: 728, width: 60, height: 60 },
-      { id: "btn-r3-c3", x: 723, y: 728, width: 60, height: 60 },
-      { id: "btn-r3-c4", x: 868, y: 728, width: 60, height: 60 },
-      { id: "btn-r3-c5", x: 1013, y: 728, width: 60, height: 60 },
-      { id: "btn-r3-c6", x: 1158, y: 728, width: 60, height: 60 },
-      // Fila 4 (y≈913)
-      { id: "btn-r4-c0", x: 288, y: 883, width: 60, height: 60 },
-      { id: "btn-r4-c1", x: 433, y: 883, width: 60, height: 60 },
-      { id: "btn-r4-c2", x: 578, y: 883, width: 60, height: 60 },
-      { id: "btn-r4-c3", x: 723, y: 883, width: 60, height: 60 },
-      { id: "btn-r4-c4", x: 868, y: 883, width: 60, height: 60 },
-      { id: "btn-r4-c5", x: 1013, y: 883, width: 60, height: 60 },
-      { id: "btn-r4-c6", x: 1158, y: 883, width: 60, height: 60 },
-    ],
+    // Grilla más compacta y centrada dentro de la sala
+    buttons: createButtonGrid(298, 345, 7, 5, 132, 84, 60),
   },
 
   discoteca: {
@@ -69,9 +62,38 @@ export const interiors: Record<string, InteriorDefinition> = {
     bgKey: "bg-discoteca",
     worldWidth: 1448,
     worldHeight: 1086,
+    staticCamera: true,
     colliders: [],
+    walkableZones: [
+      { x: 572, y: 363, width: 595, height: 393 },
+      { x: 194, y: 551, width: 397, height: 110 },
+      { x: 235, y: 660, width: 295, height: 210 },
+      { x: 1030, y: 719, width: 137, height: 151 },
+      { x: 597, y: 756, width: 178, height: 282 },
+    ],
     // Línea amarilla al centro-bajo de la pista
     exitZone: { x: 555, y: 1000, width: 180, height: 50 },
+  },
+
+  cine: {
+    id: "cine",
+    bgKey: "bg-cine",
+    worldWidth: 1254,
+    worldHeight: 1254,
+    staticCamera: true,
+    colliders: [],
+    walkableZones: [
+      // Pasillo frontal (frente a la pantalla)
+      { x: 359, y: 113, width: 497, height: 157 },
+      // Pasillo central conector (entre frontal y butacas)
+      { x: 553, y: 270, width: 147, height: 50 },
+      // Zona de butacas: pasillos laterales y centro
+      { x: 246, y: 319, width: 740, height: 392 },
+      // Corredor al lobby
+      { x: 553, y: 711, width: 147, height: 474 },
+    ],
+    // Línea amarilla al centro-bajo del lobby
+    exitZone: { x: 573, y: 1114, width: 111, height: 56 },
   },
 
   casa: {
@@ -79,8 +101,26 @@ export const interiors: Record<string, InteriorDefinition> = {
     bgKey: "bg-casa",
     worldWidth: 1950,
     worldHeight: 1300,
+    staticCamera: true,
     colliders: [],
-    // Línea amarilla al centro-bajo del segundo piso
-    exitZone: { x: 690, y: 1215, width: 150, height: 55 },
+    walkableZones: [
+      // Piso superior - sala izquierda (dormitorio/living)
+      { x: 428, y: 78,   width: 467, height: 350 },
+      // Piso superior - sala derecha (dormitorio/cocina)
+      { x: 895, y: 78,   width: 496, height: 350 },
+      // Corredor central vertical (escalera entre pisos)
+      { x: 774, y: 428,  width: 121, height: 275 },
+      // Balcón inferior derecho
+      { x: 895, y: 600,  width: 424, height: 103 },
+      // Pasillo estrecho descendiente
+      { x: 934, y: 703,  width: 116, height: 202 },
+      // Piso inferior - sala principal
+      { x: 585, y: 905,  width: 767, height: 180 },
+      // Piso inferior - sección derecha
+      { x: 877, y: 1085, width: 475, height: 130 },
+      // Corredor de salida
+      { x: 979, y: 1215, width: 114, height: 50  },
+    ],
+    exitZone: { x: 988, y: 1215, width: 97, height: 40 },
   },
 };

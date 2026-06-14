@@ -1,25 +1,38 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authenticateUser, persistSession, readSession } from "@/lib/session";
 import {
-  authenticateUser,
-  getFixedUsers,
-  persistSession,
-  readSession,
-} from "@/lib/session";
+  loginUi,
+  LOGIN_TRANSITION_STORAGE_KEY,
+  LOGIN_TRANSITION_STORAGE_VALUE,
+} from "@/game/data/ui";
 
-const initialFormState = {
-  username: "",
-  password: "",
+type LoginMode =
+  | "intro"
+  | "username"
+  | "password"
+  | "transitioning";
+
+type DisplayLine = {
+  text: string;
+  tone: "muted" | "active" | "error";
 };
+
+const INTRO_TYPING_MS = 34;
+const INTRO_PAUSE_MS = 520;
+const LINE_LIFT_PX = 44;
+const TRANSITION_DELAY_MS = 260;
 
 export function LoginScreen() {
   const router = useRouter();
-  const users = useMemo(() => getFixedUsers(), []);
-  const [formState, setFormState] = useState(initialFormState);
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const introTimersRef = useRef<number[]>([]);
+  const [mode, setMode] = useState<LoginMode>("intro");
+  const [completedLines, setCompletedLines] = useState<DisplayLine[]>([]);
+  const [activeInput, setActiveInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const session = readSession();
@@ -29,124 +42,207 @@ export function LoginScreen() {
     }
   }, [router]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+  useEffect(() => {
+    if (mode !== "intro") {
+      return;
+    }
 
-    const session = authenticateUser(formState.username, formState.password);
+    if (loginUi.introLines.length === 0) {
+      setMode("username");
+      return;
+    }
+
+    const timers: number[] = [];
+    let elapsed = 0;
+
+    loginUi.introLines.forEach((line, index) => {
+      const startAt = elapsed;
+      const finishAt = startAt + line.length * INTRO_TYPING_MS + INTRO_PAUSE_MS;
+
+      timers.push(
+        window.setTimeout(() => {
+          setCompletedLines((current) => [...current, { text: line, tone: "muted" }]);
+
+          if (index === loginUi.introLines.length - 1) {
+            setMode("username");
+          }
+        }, finishAt),
+      );
+
+      elapsed = finishAt;
+    });
+
+    introTimersRef.current = timers;
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode === "username" || mode === "password") {
+      inputRef.current?.focus();
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    const focusInput = () => {
+      inputRef.current?.focus();
+    };
+
+    window.addEventListener("pointerdown", focusInput);
+
+    return () => {
+      window.removeEventListener("pointerdown", focusInput);
+    };
+  }, []);
+
+  const activeLine = useMemo(() => {
+    if (mode === "username") {
+      return `${loginUi.usernamePrompt}: ${activeInput}`;
+    }
+
+    if (mode === "password") {
+      return `${loginUi.passwordPrompt}: ${"•".repeat(activeInput.length)}`;
+    }
+
+    return "";
+  }, [activeInput, mode]);
+
+  const handleUsernameConfirm = () => {
+    const normalized = activeInput.trim().toLowerCase();
+
+    if (!normalized) {
+      return;
+    }
+
+    setCompletedLines((current) => [
+      ...current,
+      { text: `${loginUi.usernamePrompt}: ${normalized}`, tone: "active" },
+    ]);
+    setActiveInput("");
+    setErrorMessage("");
+    setMode("password");
+  };
+
+  const handlePasswordConfirm = () => {
+    const normalizedPassword = activeInput.trim().toLowerCase();
+
+    if (!normalizedPassword) {
+      return;
+    }
+
+    const usernameLine = completedLines.findLast((line) =>
+      line.text.startsWith(`${loginUi.usernamePrompt}: `),
+    );
+    const username = usernameLine
+      ? usernameLine.text.replace(`${loginUi.usernamePrompt}: `, "").trim()
+      : "";
+
+    setCompletedLines((current) => [
+      ...current,
+      {
+        text: `${loginUi.passwordPrompt}: ${"•".repeat(normalizedPassword.length)}`,
+        tone: "active",
+      },
+    ]);
+
+    const session = authenticateUser(username, normalizedPassword);
 
     if (!session) {
-      setIsSubmitting(false);
-      setError("Ese recuerdo no coincide. Proba con uno de los dos usuarios definidos.");
+      setActiveInput("");
+      setErrorMessage(loginUi.invalidMessage);
+      setCompletedLines(
+        loginUi.introLines.map((line) => ({ text: line, tone: "muted" as const })),
+      );
+      setMode("username");
       return;
     }
 
     persistSession(session);
-    router.push("/game");
+    window.sessionStorage.setItem(
+      LOGIN_TRANSITION_STORAGE_KEY,
+      LOGIN_TRANSITION_STORAGE_VALUE,
+    );
+    setActiveInput("");
+    setErrorMessage("");
+    setMode("transitioning");
+
+    window.setTimeout(() => {
+      router.push("/game");
+    }, TRANSITION_DELAY_MS);
   };
 
-  return (
-    <main className="screen">
-      <section className="night-frame login-layout" aria-label="Ingreso al regalo">
-        <div className="login-scene">
-          <div className="scene-copy">
-            <span className="eyebrow">Plaza Nocturna</span>
-            <h1>Regalo para Naomi</h1>
-            <p>
-              Una entrada simple para llegar directo a la plaza. El personaje se
-              asigna automaticamente segun el usuario.
-            </p>
-          </div>
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") {
+      return;
+    }
 
-          <div className="pixel-plaza" aria-hidden="true">
-            <div className="moon" />
-            <div className="plaza-ground" />
-            <div className="path-horizontal" />
-            <div className="path-vertical" />
-            <div className="fountain" />
-            <div className="building left">
-              <div className="window left" />
-              <div className="window right" />
-              <div className="door" />
-            </div>
-            <div className="building right">
-              <div className="window left" />
-              <div className="window right" />
-              <div className="door" />
-            </div>
-            <div className="flower-row" />
-          </div>
+    event.preventDefault();
+
+    if (mode === "username") {
+      handleUsernameConfirm();
+      return;
+    }
+
+    if (mode === "password") {
+      handlePasswordConfirm();
+    }
+  };
+
+  const wrapperTransform = `translate(-50%, calc(-50% - ${
+    completedLines.length * LINE_LIFT_PX
+  }px))`;
+
+  return (
+    <main className={`login-screen ${mode === "transitioning" ? "is-transitioning" : ""}`}>
+      <div className="login-transition-target" aria-hidden="true" />
+      <div className="login-screen-overlay" aria-hidden="true" />
+
+      <section className="login-stage" aria-label="Ingreso al regalo">
+        <div className="login-script" style={{ transform: wrapperTransform }}>
+          {completedLines.map((line, index) => (
+            <p
+              className={`login-line is-${line.tone}`}
+              key={`${line.text}-${index}`}
+            >
+              {line.text}
+            </p>
+          ))}
+
+          {mode === "username" || mode === "password" ? (
+            <p className="login-line is-active is-live">
+              {activeLine}
+            </p>
+          ) : null}
+
+          {errorMessage ? (
+            <p className="login-line is-error">{errorMessage}</p>
+          ) : null}
         </div>
 
-        <aside className="login-panel">
-          <div className="panel-card">
-            <h2>Entrar</h2>
-            <p>
-              Login fijo para el MVP. Guarda una sesion local y redirige al juego.
-            </p>
-
-            <form className="pixel-form" onSubmit={handleSubmit}>
-              <label className="pixel-label" htmlFor="username">
-                Usuario
-                <input
-                  id="username"
-                  name="username"
-                  className="pixel-input"
-                  autoComplete="username"
-                  value={formState.username}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      username: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-
-              <label className="pixel-label" htmlFor="password">
-                Clave
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  className="pixel-input"
-                  autoComplete="current-password"
-                  value={formState.password}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      password: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-
-              {error ? <div className="error-box">{error}</div> : null}
-
-              <button className="pixel-button" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Abriendo plaza..." : "Entrar a la plaza"}
-              </button>
-            </form>
-          </div>
-
-          <div className="panel-card">
-            <h2>Usuarios del MVP</h2>
-            <div className="credential-list">
-              {users.map((user) => (
-                <div className="credential-item" key={user.username}>
-                  <span>{user.displayName}</span>
-                  <span>
-                    {user.username} / {user.password}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="field-hint">
-              La seguridad real no forma parte de esta version.
-            </p>
-          </div>
-        </aside>
+        {(mode === "username" || mode === "password") && (
+          <input
+            key={mode}
+            ref={inputRef}
+            aria-label={mode === "password" ? loginUi.passwordPrompt : loginUi.usernamePrompt}
+            autoCapitalize="none"
+            autoComplete={mode === "password" ? "current-password" : "username"}
+            autoCorrect="off"
+            autoFocus
+            className="login-hidden-input"
+            onChange={(event) => {
+              setActiveInput(event.target.value);
+              if (errorMessage) {
+                setErrorMessage("");
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            spellCheck={false}
+            type={mode === "password" ? "password" : "text"}
+            value={activeInput}
+          />
+        )}
       </section>
     </main>
   );

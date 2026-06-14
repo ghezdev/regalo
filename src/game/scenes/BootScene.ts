@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type { GameSession } from "../types/game";
+import { musicTracks } from "../data/music";
 
 export class BootScene extends Phaser.Scene {
   private session!: GameSession;
@@ -31,17 +32,33 @@ export class BootScene extends Phaser.Scene {
     this.load.image("bg-casa-pensamientos", "/sprites/interiores/casa%20de%20los%20recuerdos.png");
     this.load.image("bg-discoteca", "/sprites/interiores/discoteca.png");
     this.load.image("bg-casa", "/sprites/interiores/casa.jpg");
+    this.load.image("bg-cine", "/sprites/interiores/cine.png");
 
     // Button sprites
     this.load.image("tecla", "/sprites/botones/tecla.png");
     this.load.image("tecla-presionada", "/sprites/botones/tecla_presionada.webp");
+
+    // Music tracks
+    for (const track of Object.values(musicTracks)) {
+      this.load.audio(track.id, track.src);
+    }
   }
 
   create() {
     this.buildSpritesheet("character-naomi", "naomi-f");
     this.buildSpritesheet("character-guillermo", "guille-f");
     this.createAnimations();
-    this.scene.start("plaza", { session: this.session });
+
+    if (this.session.characterId === "naomi") {
+      // Castillo left room center: zone { x:140, y:337, w:239, h:231 }
+      this.scene.start("interior", {
+        interiorId: "castillo",
+        session: this.session,
+        spawnOverride: { x: 260, y: 452 },
+      });
+    } else {
+      this.scene.start("plaza", { session: this.session });
+    }
   }
 
   private buildSpritesheet(textureKey: string, framePrefix: string) {

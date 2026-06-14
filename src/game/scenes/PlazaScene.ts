@@ -3,7 +3,7 @@ import { dialogues } from "../data/dialogues";
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../config";
 import { plazaUi } from "../data/ui";
 import { plazaMap } from "../data/maps/plaza";
-import { createAudioToggle } from "../systems/audio";
+import { createAudioToggle, playAmbientMusic } from "../systems/audio";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
@@ -116,6 +116,22 @@ export class PlazaScene extends Phaser.Scene {
     // ── Systems ───────────────────────────────────────────────────
     this.dialogue = new DialogueController();
     createAudioToggle(this);
+
+    // Ambient music: play immediately if audio is already unlocked (e.g. coming from an interior),
+    // otherwise wait for first user interaction (browser autoplay policy).
+    if (!this.sound.locked) {
+      playAmbientMusic(this);
+    } else {
+      this.input.once("pointerdown", () => {
+        if (this.sound.locked) {
+          this.sound.once(Phaser.Sound.Events.UNLOCKED, () => {
+            playAmbientMusic(this);
+          });
+        } else {
+          playAmbientMusic(this);
+        }
+      });
+    }
 
     this.interactions = plazaMap.interactions.map((zone) => createInteractionPrompt(this, zone, 1));
     setOverlayHud({ movementHint: plazaUi.movementHint });

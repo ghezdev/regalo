@@ -13,3 +13,4 @@ build/
 output/
 .playwright-mcp/
 
+.vercel

@@ -4,7 +4,7 @@ import type { CharacterId, Direction, PlayerUpdate } from "../types/game";
 type RemoteUpdateCallback = (update: PlayerUpdate) => void;
 
 export class MultiplayerClient {
-  private channel: RealtimeChannel;
+  private channel: RealtimeChannel | null = null;
   private characterId: CharacterId;
   private currentScene = "plaza";
   private onRemoteUpdate: RemoteUpdateCallback | null = null;
@@ -13,6 +13,8 @@ export class MultiplayerClient {
 
   constructor(supabaseUrl: string, supabaseAnonKey: string, characterId: CharacterId) {
     this.characterId = characterId;
+
+    if (!supabaseUrl || !supabaseAnonKey) return;
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     this.channel = supabase.channel("regalo-game");
@@ -47,6 +49,7 @@ export class MultiplayerClient {
       ...(floorMode && { floorMode: true }),
     };
 
+    if (!this.channel) return;
     void this.channel.send({
       type: "broadcast",
       event: "position",
@@ -55,6 +58,6 @@ export class MultiplayerClient {
   }
 
   destroy() {
-    void this.channel.unsubscribe();
+    void this.channel?.unsubscribe();
   }
 }

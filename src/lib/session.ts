@@ -9,6 +9,7 @@ export type Session = {
 };
 
 type UserRecord = Session & {
+  aliases?: string[];
   password: string;
 };
 
@@ -21,6 +22,7 @@ const USERS: UserRecord[] = [
   },
   {
     username: "guillermo",
+    aliases: ["guille"],
     password: "maia",
     displayName: "Guillermo",
     characterId: "guillermo",
@@ -33,7 +35,9 @@ export function authenticateUser(username: string, password: string): Session | 
 
   const matchedUser = USERS.find(
     (user) =>
-      user.username === normalizedUsername && user.password === normalizedPassword,
+      (user.username === normalizedUsername ||
+        user.aliases?.includes(normalizedUsername)) &&
+      user.password === normalizedPassword,
   );
 
   if (!matchedUser) {

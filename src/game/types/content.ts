@@ -29,6 +29,13 @@ export interface MusicTrackDefinition {
   volume: number;
 }
 
+export interface AudioCalendarEntry {
+  key: string;
+  src: string;
+  dateLabel: string;
+  date: string;
+}
+
 export interface MapInteraction {
   id: string;
   label: string;
@@ -103,6 +110,8 @@ export interface InteriorDefinition {
   worldWidth: number;
   worldHeight: number;
   colliders: ImageMapCollider[];
+  walkableZones?: ImageMapCollider[];
   exitZone: ImageMapCollider;
   buttons?: ButtonDefinition[];
+  staticCamera?: boolean;
 }

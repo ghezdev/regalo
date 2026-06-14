@@ -1,76 +1,24 @@
-import * as Phaser from "phaser";
-import { UI_DEPTH } from "../constants/depths";
+import { setOverlayDialogue } from "../ui-overlay-store";
 
 export class DialogueController {
-  private readonly root: Phaser.GameObjects.Container;
-  private readonly panel: Phaser.GameObjects.Rectangle;
-  private readonly nameText: Phaser.GameObjects.Text;
-  private readonly bodyText: Phaser.GameObjects.Text;
-  private readonly hintText: Phaser.GameObjects.Text;
   private lines: string[] = [];
+  private title = "";
   private index = 0;
   private visible = false;
 
-  constructor(private readonly scene: Phaser.Scene) {
-    const width = scene.scale.width;
-    const height = scene.scale.height;
-
-    const border = scene.add
-      .rectangle(width / 2, height - 48, width - 20, 76, 0x2a2140)
-      .setStrokeStyle(2, 0xe9d7a1)
-      .setScrollFactor(0);
-    this.panel = scene.add
-      .rectangle(width / 2, height - 48, width - 28, 64, 0x141029, 0.96)
-      .setScrollFactor(0);
-    const namePlate = scene.add
-      .rectangle(64, height - 76, 96, 16, 0x3a2a4f)
-      .setStrokeStyle(1, 0xf7c9d9)
-      .setScrollFactor(0);
-
-    this.nameText = scene.add
-      .text(20, height - 76, "", {
-        fontFamily: "monospace",
-        fontSize: "10px",
-        color: "#f7c9d9",
-      })
-      .setScrollFactor(0);
-
-    this.bodyText = scene.add
-      .text(20, height - 62, "", {
-        fontFamily: "monospace",
-        fontSize: "11px",
-        color: "#f6f3ff",
-        wordWrap: { width: width - 54 },
-      })
-      .setScrollFactor(0);
-
-    this.hintText = scene.add
-      .text(width - 54, height - 20, "E / Enter", {
-        fontFamily: "monospace",
-        fontSize: "9px",
-        color: "#e9d7a1",
-      })
-      .setScrollFactor(0);
-
-    this.root = scene.add.container(0, 0, [
-      border,
-      this.panel,
-      namePlate,
-      this.nameText,
-      this.bodyText,
-      this.hintText,
-    ]);
-    this.root.setDepth(UI_DEPTH);
-    this.root.setVisible(false);
-  }
+  constructor() {}
 
   show(title: string, lines: string[]) {
     this.lines = lines;
+    this.title = title;
     this.index = 0;
     this.visible = true;
-    this.nameText.setText(title);
-    this.bodyText.setText(lines[0] ?? "");
-    this.root.setVisible(true);
+    setOverlayDialogue({
+      visible: true,
+      title,
+      body: lines[0] ?? "",
+      hint: "e / enter",
+    });
   }
 
   advance() {
@@ -84,13 +32,22 @@ export class DialogueController {
       return false;
     }
 
-    this.bodyText.setText(this.lines[this.index]);
+    setOverlayDialogue({
+      visible: true,
+      title: this.title,
+      body: this.lines[this.index] ?? "",
+      hint: "e / enter",
+    });
     return true;
   }
 
   hide() {
     this.visible = false;
-    this.root.setVisible(false);
+    setOverlayDialogue({
+      visible: false,
+      title: "",
+      body: "",
+    });
   }
 
   isVisible() {

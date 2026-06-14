@@ -1,3 +1,9 @@
+@font-face {
+  font-family: "DungeonFont";
+  src: url("/font/DungeonFont.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --bg-top: #130f2b;
@@ -27,12 +33,9 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at top, rgba(255, 234, 179, 0.12), transparent 28%),
-    radial-gradient(circle at 20% 20%, rgba(240, 145, 189, 0.14), transparent 24%),
-    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  background: #000;
   color: var(--text);
-  font-family: "Courier New", monospace;
+  font-family: "DungeonFont", monospace;
   image-rendering: pixelated;
 }
 
@@ -50,6 +53,101 @@ a {
   display: grid;
   place-items: center;
   padding: 24px;
+}
+
+.login-screen {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+.login-screen-overlay,
+.login-transition-target {
+  position: absolute;
+  inset: 0;
+}
+
+.login-screen-overlay {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.04), transparent 16%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02) 0,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    #000;
+  opacity: 1;
+  transition: opacity 1.8s linear;
+}
+
+.login-transition-target {
+  background:
+    linear-gradient(180deg, rgba(8, 8, 8, 0.2), rgba(8, 8, 8, 0.12)),
+    url("/assets/mockups/actual-game.png") center center / cover no-repeat;
+  filter: saturate(0.95) brightness(0.92);
+  transform: scale(1.04);
+}
+
+.login-screen.is-transitioning .login-screen-overlay {
+  opacity: 0;
+}
+
+.login-stage {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.login-script {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(78vw, 420px);
+  transform: translate(-50%, -50%);
+  transition:
+    transform 500ms ease,
+    opacity 0.95s ease;
+  z-index: 1;
+}
+
+.login-screen.is-transitioning .login-script {
+  opacity: 0;
+}
+
+.login-line {
+  min-height: 30px;
+  margin: 0 0 18px;
+  color: rgba(246, 237, 209, 0.46);
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.35;
+  text-align: center;
+}
+
+.login-line.is-active,
+.login-line.is-error {
+  color: #f6edd1;
+}
+
+.login-line.is-error {
+  color: #ffddd5;
+}
+
+.login-line.is-live::after {
+  content: "_";
+  margin-left: 4px;
+  animation: login-cursor-blink 0.9s steps(1) infinite;
+}
+
+.login-hidden-input {
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .night-frame {
@@ -429,7 +527,30 @@ a {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: #0d1024;
+  background: #000;
+}
+
+.game-reveal {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.04), transparent 16%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02) 0,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    #000;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 1.8s linear;
+  z-index: 20;
+}
+
+.game-reveal.is-fading {
+  opacity: 0;
 }
 
 .audio-fab {
@@ -449,6 +570,54 @@ a {
   backdrop-filter: blur(4px);
 }
 
+.audio-date-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 7;
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid rgba(246, 237, 209, 0.4);
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-family: "DungeonFont", monospace;
+  font-size: 18px;
+  color: #f6edd1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.audio-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.audio-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.audio-progress-fill {
+  height: 100%;
+  background: #f6edd1;
+  border-radius: 2px;
+}
+
+.audio-progress-time {
+  font-family: "DungeonFont", monospace;
+  font-size: 11px;
+  color: rgba(246, 237, 209, 0.7);
+}
+
+.audio-progress-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
 .audio-fab:hover {
   border-color: var(--gold);
   background: rgba(10, 8, 22, 0.96);
@@ -457,31 +626,41 @@ a {
 .canvas-shell {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   padding: 0;
   border: 0;
-  background: #0d1024;
+  background: #000;
   box-shadow: none;
 }
 
-.canvas-root {
-  width: 100%;
-  height: 100%;
+.game-stage {
+  position: relative;
   overflow: hidden;
-  background: #0d1024;
+  background: #000;
+}
+
+.canvas-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  flex: 0 0 auto;
 }
 
 .canvas-loading-state {
   position: absolute;
   inset: 0;
   min-height: auto;
-  background: #0d1024;
+  background: #000;
+  z-index: 8;
 }
 
 .canvas-root canvas {
   display: block;
   width: 100%;
   height: 100%;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 .tiny-button {
@@ -507,6 +686,113 @@ a {
   animation: spin 0.9s linear infinite;
 }
 
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.game-hud-card {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  padding: 6px 10px;
+  border: 2px solid rgba(246, 237, 209, 0.18);
+  background: rgba(0, 0, 0, 0.76);
+  box-shadow: 0 0 0 1px rgba(246, 237, 209, 0.08);
+}
+
+.game-hud-text {
+  margin: 0;
+  color: #f6edd1;
+  font-size: clamp(16px, 1.5vw, 20px);
+  line-height: 1.3;
+}
+
+.world-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 2px solid rgba(246, 237, 209, 0.22);
+  background: rgba(11, 8, 18, 0.86);
+  color: #f6edd1;
+  font-size: clamp(18px, 1.85vw, 24px);
+  line-height: 1;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  box-shadow:
+    0 0 0 1px rgba(246, 237, 209, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.world-label.is-active {
+  border-color: rgba(246, 210, 122, 0.45);
+  background: rgba(26, 17, 22, 0.94);
+}
+
+.world-label-key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+  border: 2px solid rgba(246, 210, 122, 0.42);
+  background: rgba(246, 210, 122, 0.14);
+  color: #f6d27a;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.dialogue-overlay {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  min-height: 74px;
+  padding: 12px 14px 28px;
+  border: 2px solid rgba(246, 237, 209, 0.18);
+  background: rgba(0, 0, 0, 0.84);
+  box-shadow:
+    0 0 0 1px rgba(246, 237, 209, 0.08),
+    0 12px 28px rgba(0, 0, 0, 0.34);
+}
+
+.dialogue-overlay-title {
+  margin-bottom: 6px;
+  color: #f6edd1;
+  font-size: clamp(18px, 1.9vw, 24px);
+  line-height: 1.1;
+}
+
+.dialogue-overlay-body {
+  margin: 0;
+  color: #f6edd1;
+  font-size: clamp(17px, 1.7vw, 22px);
+  line-height: 1.45;
+}
+
+.dialogue-overlay-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  color: #bcb397;
+  font-size: clamp(14px, 1.35vw, 17px);
+}
+
+@keyframes login-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -526,6 +812,130 @@ a {
   .canvas-shell {
     width: 100%;
   }
+}
+
+.disco-audio-iframe {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.disco-audio-card {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border: 2px solid var(--border-dark);
+  box-shadow: 0 0 0 2px var(--border-light);
+  background: var(--panel);
+  pointer-events: auto;
+}
+
+.disco-audio-card-title {
+  color: var(--gold);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.disco-audio-card-stop {
+  padding: 4px 10px;
+  border: 2px solid var(--border-dark);
+  background: rgba(38, 29, 61, 0.92);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.disco-audio-card-stop:hover {
+  border-color: var(--gold);
+  background: rgba(10, 8, 22, 0.96);
+}
+
+/* ── Cine video player ── */
+
+.cine-video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.88);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.cine-video-container {
+  position: relative;
+  width: min(92vw, 960px);
+  display: grid;
+  gap: 0;
+  cursor: default;
+}
+
+.cine-video-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 210;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #f6edd1;
+  background: rgba(10, 8, 22, 0.94);
+  color: #f6edd1;
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  pointer-events: auto;
+}
+
+.cine-video-close:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.cine-video-close:hover ~ .cine-video-wrapper .cine-video-player {
+  pointer-events: none;
+}
+
+.cine-video-wrapper {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.cine-video-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.cine-video-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffddd5;
+  font-family: "DungeonFont", monospace;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1;
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {
