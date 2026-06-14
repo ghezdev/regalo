@@ -27,6 +27,7 @@ export interface GameOverlayState {
   activeAudioLabel: { text: string; x: number; y: number; elapsed: number; duration: number } | null;
   discoAudioOpen: boolean;
   cineVideoOpen: boolean;
+  endingBlackoutVisible: boolean;
 }
 
 const DEFAULT_STATE: GameOverlayState = {
@@ -43,6 +44,7 @@ const DEFAULT_STATE: GameOverlayState = {
   activeAudioLabel: null,
   discoAudioOpen: false,
   cineVideoOpen: false,
+  endingBlackoutVisible: false,
 };
 
 let state: GameOverlayState = DEFAULT_STATE;
@@ -104,4 +106,8 @@ export function setDiscoAudioOpen(open: boolean) {
 
 export function setCineVideoOpen(open: boolean) {
   updateState({ cineVideoOpen: open });
+}
+
+export function setEndingBlackoutVisible(visible: boolean) {
+  updateState({ endingBlackoutVisible: visible });
 }

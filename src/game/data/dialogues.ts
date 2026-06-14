@@ -75,6 +75,29 @@ export const dialogues: Record<string, DialogueEntry> = {
     id: "discoteca",
     lines: ["La discoteca..."],
   },
+  "discoteca-intro": {
+    id: "discoteca-intro",
+    lines: [
+      "Te hice una playlist con canciones de tus artistas que te gustan, espero que te guste y puedas disfrutarlo.",
+      "Podríamos venir a escucharlo juntos acá si quisieras.",
+    ],
+  },
+  "casa-intro": {
+    id: "casa-intro",
+    lines: [
+      "Esta es una simulación de lo que sería nuestra casa, no es exactamente como a vos te gustaba, ni como a mi me gustaría, pero es una casa.",
+      "Lograr tener una juntos creo que debe ser un gran logro.",
+    ],
+  },
+  "casa-pensamientos-intro": {
+    id: "casa-pensamientos-intro",
+    lines: [
+      "Estás entrando en mis pensamientos, no pensé las cosas que dije acá, solamente sentí y pensé.",
+      "Espero no te lastimen.",
+      "Cada botón representa cada día que te pensé, va de arriba abajo, izquierda derecha, ese es su orden.",
+      "Algunos audios duran casi 20 mins, son muy largos.",
+    ],
+  },
   "entrada-der": {
     id: "entrada-der",
     lines: ["Entrada derecha..."],
@@ -85,7 +108,9 @@ export const dialogues: Record<string, DialogueEntry> = {
   },
   "fondo-sur": {
     id: "fondo-sur",
-    lines: ["El campamento..."],
+    lines: [
+      "Perdón por todo lo que no te pude dar, espero que puedas conseguir a alguien mejor, disfruta de tu vida al máximo, sos muy hermosa y muy inteligente, sé que te va a ir bien en la vida, carpe diem <3",
+    ],
   },
 };
 

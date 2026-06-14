@@ -8,6 +8,7 @@ import {
   LOGIN_TRANSITION_STORAGE_KEY,
   LOGIN_TRANSITION_STORAGE_VALUE,
 } from "@/game/data/ui";
+import { hasNaomiBadEndingSeen } from "@/game/systems/ending/state";
 
 const REVEAL_DURATION_MS = 1800;
 
@@ -18,6 +19,7 @@ export function GameShell() {
   const [shouldReveal, setShouldReveal] = useState(false);
   const [isRevealFading, setIsRevealFading] = useState(false);
   const [isRevealVisible, setIsRevealVisible] = useState(false);
+  const [showNaomiBadEnding, setShowNaomiBadEnding] = useState(false);
 
   useEffect(() => {
     const storedSession = readSession();
@@ -35,6 +37,9 @@ export function GameShell() {
     }
 
     setSession(storedSession);
+    if (storedSession.characterId === "naomi" && hasNaomiBadEndingSeen()) {
+      setShowNaomiBadEnding(true);
+    }
     setIsReady(true);
   }, [router]);
 
@@ -56,6 +61,14 @@ export function GameShell() {
 
   if (!isReady || !session) {
     return <main className="game-screen" />;
+  }
+
+  if (showNaomiBadEnding) {
+    return (
+      <main className="game-screen">
+        <div className="ending-blackout" />
+      </main>
+    );
   }
 
   return (

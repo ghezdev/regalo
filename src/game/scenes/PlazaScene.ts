@@ -3,13 +3,15 @@ import { dialogues } from "../data/dialogues";
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../config";
 import { plazaUi } from "../data/ui";
 import { plazaMap } from "../data/maps/plaza";
-import { createAudioToggle, playAmbientMusic } from "../systems/audio";
+import { PLAZA_INTERIOR_SPAWN } from "../data/maps/plaza-interiors";
+import { createAudioToggle, pauseAmbientMusic, playAmbientMusic } from "../systems/audio";
 import { DialogueController } from "../systems/dialogue";
+import { markNaomiBadEndingSeen } from "../systems/ending/state";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
 import type { GameSession, Direction, PlayerUpdate } from "../types/game";
 import type { MultiplayerClient } from "../systems/multiplayer";
-import { setOverlayHud, setOverlayLabels } from "../ui-overlay-store";
+import { setEndingBlackoutVisible, setOverlayHud, setOverlayLabels } from "../ui-overlay-store";
 
 interface PlazaSceneData {
   session: GameSession;
@@ -32,6 +34,7 @@ export class PlazaScene extends Phaser.Scene {
   private multiplayer!: MultiplayerClient;
   private remotePlayer: Phaser.GameObjects.Sprite | null = null;
   private lastRemoteUpdate: PlayerUpdate | null = null;
+  private naomiBadEndingActive = false;
 
   private static readonly INTERIOR_MAP: Record<string, string> = {
     "castle-entrance": "castillo",
@@ -45,15 +48,6 @@ export class PlazaScene extends Phaser.Scene {
     super("plaza");
   }
 
-  // Maps interior IDs back to the plaza entrance zone that leads there
-  private static readonly INTERIOR_SPAWN: Record<string, { x: number; y: number }> = {
-    castillo: { x: 1400, y: 285 },
-    "casa-pensamientos": { x: 338, y: 568 },
-    discoteca: { x: 1093, y: 568 },
-    cine: { x: 1650, y: 554 },
-    casa: { x: 1654, y: 808 },
-  };
-
   init(data: PlazaSceneData) {
     this.session = data.session;
     this.fromInterior = data.fromInterior;
@@ -66,6 +60,8 @@ export class PlazaScene extends Phaser.Scene {
     this.lastRemoteUpdate = null;
     this.guilleFloorActive = false;
     this.activeInteraction = null;
+    this.naomiBadEndingActive = false;
+    setEndingBlackoutVisible(false);
 
     // ── World ──────────────────────────────────────────────────────
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -98,7 +94,7 @@ export class PlazaScene extends Phaser.Scene {
     // ── Player ────────────────────────────────────────────────────
     const defaultSpawn = plazaMap.spawn[this.session.characterId];
     const spawn =
-      (this.fromInterior && PlazaScene.INTERIOR_SPAWN[this.fromInterior]) ?? defaultSpawn;
+      (this.fromInterior && PLAZA_INTERIOR_SPAWN[this.fromInterior]) ?? defaultSpawn;
     if (!spawn || typeof spawn === "string") {
       throw new Error(`Invalid spawn for character ${this.session.characterId}`);
     }
@@ -170,7 +166,20 @@ export class PlazaScene extends Phaser.Scene {
         }
         const entry = dialogues[this.activeInteraction.data.interactionId];
         if (entry) {
-          this.dialogue.show(this.activeInteraction.data.targetName, entry.lines);
+          const shouldTriggerNaomiBadEnding =
+            this.session.characterId === "naomi" &&
+            this.activeInteraction.data.interactionId === "fondo-sur";
+
+          this.dialogue.show(this.activeInteraction.data.targetName, entry.lines, {
+            onComplete: shouldTriggerNaomiBadEnding
+              ? () => {
+                  markNaomiBadEndingSeen();
+                  pauseAmbientMusic();
+                  this.naomiBadEndingActive = true;
+                  setEndingBlackoutVisible(true);
+                }
+              : undefined,
+          });
         }
       }
     }
@@ -191,6 +200,13 @@ export class PlazaScene extends Phaser.Scene {
     }
 
     // ── Block input while floor mode or dialogue active ────────────
+    if (this.naomiBadEndingActive) {
+      this.player.setVelocity(0, 0);
+      this.player.anims.stop();
+      this.refreshInteractionState(true);
+      return;
+    }
+
     if (this.dialogue.isVisible() || this.guilleFloorActive) {
       this.player.setVelocity(0, 0);
       if (!this.guilleFloorActive) this.player.anims.stop();
@@ -205,7 +221,19 @@ export class PlazaScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const moving = body.velocity.lengthSq() > 0;
     const direction = (this.player.getData("lastDirection") ?? "down") as Direction;
-    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving, this.guilleFloorActive);
+    this.multiplayer.sendPosition(
+      this.player.x,
+      this.player.y,
+      direction,
+      moving,
+      {
+        floorMode: this.guilleFloorActive,
+        plazaPosition: {
+          x: this.player.x,
+          y: this.player.y,
+        },
+      },
+    );
 
     // ── Multiplayer: render remote player (always) ────────────────
     if (this.lastRemoteUpdate) {

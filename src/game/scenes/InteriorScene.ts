@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import type { GameSession, Direction, PlayerUpdate } from "../types/game";
 import type { MultiplayerClient } from "../systems/multiplayer";
 import { interiors } from "../data/maps/interiors";
+import { PLAZA_INTERIOR_SPAWN } from "../data/maps/plaza-interiors";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
 import { setOverlayLabels, setOverlayHud, setAudioLabel, setDiscoAudioOpen, setCineVideoOpen } from "../ui-overlay-store";
 import { createAudioToggle, pauseAmbientMusic, resumeAmbientMusic } from "../systems/audio";
@@ -9,7 +10,7 @@ import { ButtonAudioSystem } from "../systems/button-audio";
 import { audioCalendar, getAudioForButton } from "../data/audio-calendar";
 import type { AudioCalendarEntry } from "../types/content";
 import { DialogueController } from "../systems/dialogue";
-import { naomiIntroDialogue } from "../data/dialogues";
+import { naomiIntroDialogue, dialogues } from "../data/dialogues";
 import { hasSeenNaomiIntro, markNaomiIntroAsSeen } from "../systems/intro/state";
 
 interface InteriorSceneData {
@@ -292,6 +293,21 @@ export class InteriorScene extends Phaser.Scene {
       });
     }
 
+    if (this.interiorId === "discoteca" && this.session.characterId === "naomi") {
+      const entry = dialogues["discoteca-intro"];
+      this.dialogue.show("La Discoteca", entry.lines, { hint: "presiona e para continuar" });
+    }
+
+    if (this.interiorId === "casa" && this.session.characterId === "naomi") {
+      const entry = dialogues["casa-intro"];
+      this.dialogue.show("Nuestra Casa", entry.lines, { hint: "presiona e para continuar" });
+    }
+
+    if (this.interiorId === "casa-pensamientos" && this.session.characterId === "naomi") {
+      const entry = dialogues["casa-pensamientos-intro"];
+      this.dialogue.show("Mis Pensamientos", entry.lines, { hint: "presiona e para continuar" });
+    }
+
     // ── Multiplayer ───────────────────────────────────────────────
     this.multiplayer = this.registry.get("multiplayer") as MultiplayerClient;
     this.multiplayer.setScene(`interior:${this.interiorId}`);
@@ -376,7 +392,9 @@ export class InteriorScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const moving = body.velocity.lengthSq() > 0;
     const direction = (this.player.getData("lastDirection") ?? "down") as Direction;
-    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving);
+    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving, {
+      plazaPosition: PLAZA_INTERIOR_SPAWN[this.interiorId],
+    });
 
     // ── Multiplayer: render remote player ─────────────────────────
     if (this.lastRemoteUpdate) {

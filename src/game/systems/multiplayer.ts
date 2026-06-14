@@ -1,5 +1,6 @@
 import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
-import type { CharacterId, Direction, PlayerUpdate } from "../types/game";
+import type { CharacterId, Direction, PlayerUpdate, WorldPoint } from "../types/game";
+import { REGALO_REALTIME_CHANNEL } from "../realtime";
 
 type RemoteUpdateCallback = (update: PlayerUpdate) => void;
 
@@ -17,7 +18,7 @@ export class MultiplayerClient {
     if (!supabaseUrl || !supabaseAnonKey) return;
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    this.channel = supabase.channel("regalo-game");
+    this.channel = supabase.channel(REGALO_REALTIME_CHANNEL);
 
     this.channel
       .on("broadcast", { event: "position" }, ({ payload }) => {
@@ -34,7 +35,16 @@ export class MultiplayerClient {
     this.onRemoteUpdate = callback;
   }
 
-  sendPosition(x: number, y: number, direction: Direction, moving: boolean, floorMode = false) {
+  sendPosition(
+    x: number,
+    y: number,
+    direction: Direction,
+    moving: boolean,
+    options: {
+      floorMode?: boolean;
+      plazaPosition?: WorldPoint;
+    } = {},
+  ) {
     const now = Date.now();
     if (now - this.lastSentAt < MultiplayerClient.SEND_INTERVAL_MS) return;
     this.lastSentAt = now;
@@ -46,7 +56,8 @@ export class MultiplayerClient {
       direction,
       moving,
       scene: this.currentScene,
-      ...(floorMode && { floorMode: true }),
+      ...(options.floorMode && { floorMode: true }),
+      ...(options.plazaPosition && { plazaPosition: options.plazaPosition }),
     };
 
     if (!this.channel) return;

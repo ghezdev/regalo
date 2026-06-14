@@ -100,6 +100,8 @@ export function GameOverlay({ displayScale }: GameOverlayProps) {
       {overlay.discoAudioOpen ? <DiscoAudioPlayer /> : null}
 
       {overlay.cineVideoOpen ? <CineVideoPlayer /> : null}
+
+      {overlay.endingBlackoutVisible ? <div className="ending-blackout" /> : null}
     </div>
   );
 }

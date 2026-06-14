@@ -582,45 +582,46 @@ a {
   z-index: 7;
   background: rgba(20, 20, 30, 0.85);
   border: 1px solid rgba(246, 237, 209, 0.4);
-  border-radius: 4px;
-  padding: 8px 14px;
+  border-radius: 6px;
+  padding: 12px 20px;
   font-family: "DungeonFont", monospace;
-  font-size: 18px;
+  font-size: 28px;
   color: #f6edd1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  min-width: 180px;
 }
 
 .audio-progress-container {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
 .audio-progress-track {
   width: 100%;
-  height: 4px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .audio-progress-fill {
   height: 100%;
   background: #f6edd1;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .audio-progress-time {
   font-family: "DungeonFont", monospace;
-  font-size: 11px;
+  font-size: 16px;
   color: rgba(246, 237, 209, 0.7);
 }
 
 .audio-progress-row {
   display: flex;
   justify-content: space-between;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .audio-fab:hover {
@@ -963,4 +964,70 @@ a {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ── Mapa debug ── */
+
+.mapa-page {
+  min-height: 100vh;
+  padding: 24px;
+  background: #111;
+  color: #f2f2f2;
+  font-family: monospace;
+}
+
+.mapa-header {
+  margin-bottom: 16px;
+}
+
+.mapa-header h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.mapa-header p {
+  margin: 4px 0;
+}
+
+.mapa-error {
+  color: #ff9b9b;
+}
+
+.mapa-frame {
+  max-width: 1200px;
+  border: 1px solid #555;
+  background: #000;
+}
+
+.mapa-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2009 / 1273;
+  overflow: hidden;
+}
+
+.mapa-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mapa-marker {
+  position: absolute;
+  transform: translate(-50%, -130%);
+  padding: 2px 6px;
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.ending-blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
 }
