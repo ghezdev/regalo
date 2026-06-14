@@ -8,6 +8,9 @@ import { createAudioToggle, pauseAmbientMusic, resumeAmbientMusic } from "../sys
 import { ButtonAudioSystem } from "../systems/button-audio";
 import { audioCalendar, getAudioForButton } from "../data/audio-calendar";
 import type { AudioCalendarEntry } from "../types/content";
+import { DialogueController } from "../systems/dialogue";
+import { naomiIntroDialogue } from "../data/dialogues";
+import { hasSeenNaomiIntro, markNaomiIntroAsSeen } from "../systems/intro/state";
 
 interface InteriorSceneData {
   interiorId: string;
@@ -150,6 +153,7 @@ export class InteriorScene extends Phaser.Scene {
   private multiplayer!: MultiplayerClient;
   private remotePlayer: Phaser.Physics.Arcade.Sprite | null = null;
   private lastRemoteUpdate: PlayerUpdate | null = null;
+  private dialogue!: DialogueController;
 
   constructor() {
     super("interior");
@@ -254,6 +258,7 @@ export class InteriorScene extends Phaser.Scene {
       }
     }
     this.buttonAudio = new ButtonAudioSystem(this, audioMap);
+    this.dialogue = new DialogueController();
 
     // Input
     this.cursorKeys = this.input.keyboard!.createCursorKeys();
@@ -273,6 +278,19 @@ export class InteriorScene extends Phaser.Scene {
     createAudioToggle(this);
     this.cameras.main.fadeIn(300, 0, 0, 0);
 
+    if (
+      this.interiorId === "castillo" &&
+      this.session.characterId === "naomi" &&
+      !hasSeenNaomiIntro()
+    ) {
+      this.dialogue.show("Para Naomi", naomiIntroDialogue.lines, {
+        hint: "presiona e para continuar",
+        onComplete: () => {
+          markNaomiIntroAsSeen();
+        },
+      });
+    }
+
     // ── Multiplayer ───────────────────────────────────────────────
     this.multiplayer = this.registry.get("multiplayer") as MultiplayerClient;
     this.multiplayer.setScene(`interior:${this.interiorId}`);
@@ -289,6 +307,17 @@ export class InteriorScene extends Phaser.Scene {
 
   update() {
     if (this.exiting) return;
+
+    if (this.dialogue.isVisible()) {
+      if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+        this.dialogue.advance();
+      }
+
+      this.player.setVelocity(0, 0);
+      this.player.anims.stop();
+      setOverlayLabels([]);
+      return;
+    }
 
     resolveMovement(this.player, this.movementKeys, this.cursorKeys);
 

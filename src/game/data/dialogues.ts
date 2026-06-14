@@ -1,5 +1,22 @@
 import type { DialogueEntry } from "../types/content";
 
+export const naomiIntroDialogue: DialogueEntry = {
+  id: "naomi-intro-once",
+  lines: [
+    "Te hice este juego, con un conjunto de edificios el cual podes interactuar.",
+    "La idea es que vayas yendo de edificio en edificio, y si queres, disfrutar de lo que contiene cada uno de los edificios.",
+    "Queria hacerte muchas cosas mas, pero queria terminar para el sabado 13 de junio a las 23:59, pero no lo logre.",
+    "Asi que te muestro lo poco que pude hacerte. Espero te guste.",
+    "Quiero volver a hablarte, pero no se como, despues de lo que hice, creo que no te es comodo volver a hablarte asi de repente.",
+    "Por eso hice este juego, para que me des la oportunidad de si hablar o no.",
+    "Te extrane, te extrano, y estos dias sin vos me demostraron que nunca voy a dejar de hacerlo.",
+    "Saliendo de este castillo, yendo al final de la derecha, encontraras la plaza, donde se ubican el resto de los edificios.",
+    "A la izquierda de la plaza, muy a la izquierda, tenes un edificio especial, tiene ambiente tenebroso porque en realidad no es lugar lindo, pero esta si queres ir a verlo.",
+    "El final del juego es muy al sur, ahi me vas a encontrar a mi, si decidis seguir bajando luego de verme, significa que no queres hablar conmigo ni saber nada de mi, si fuera asi, yo respetare tu decision.",
+    "Si no te vas, y te quedas conmigo, asumo que aceptaste que podamos hablar.",
+  ],
+};
+
 export const dialogues: Record<string, DialogueEntry> = {
   "fountain-message": {
     id: "fountain-message",

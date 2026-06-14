@@ -42,7 +42,7 @@ const fileBuffer = await new Promise((resolve, reject) => {
   stream.on("error", reject);
 });
 
-const { data, error } = await supabase.storage
+const { error } = await supabase.storage
   .from(BUCKET)
   .upload(STORAGE_PATH, fileBuffer, {
     contentType: "video/mp4",
