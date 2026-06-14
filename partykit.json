@@ -1,0 +1,4 @@
+{
+  "name": "regalo-game",
+  "main": "party/game-room.ts"
+}

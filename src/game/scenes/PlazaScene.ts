@@ -7,15 +7,18 @@ import { createAudioToggle } from "../systems/audio";
 import { DialogueController } from "../systems/dialogue";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
-import type { GameSession } from "../types/game";
+import type { GameSession, Direction, PlayerUpdate } from "../types/game";
+import type { MultiplayerClient } from "../systems/multiplayer";
 import { setOverlayHud, setOverlayLabels } from "../ui-overlay-store";
 
 interface PlazaSceneData {
   session: GameSession;
+  fromInterior?: string;
 }
 
 export class PlazaScene extends Phaser.Scene {
   private session!: GameSession;
+  private fromInterior: string | undefined;
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursorKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
   private movementKeys!: MovementKeys;
@@ -26,11 +29,15 @@ export class PlazaScene extends Phaser.Scene {
   private interactions: ActiveInteraction[] = [];
   private activeInteraction: ActiveInteraction | null = null;
   private guilleFloorActive = false;
+  private multiplayer!: MultiplayerClient;
+  private remotePlayer: Phaser.Physics.Arcade.Sprite | null = null;
+  private lastRemoteUpdate: PlayerUpdate | null = null;
 
   private static readonly INTERIOR_MAP: Record<string, string> = {
     "castle-entrance": "castillo",
     "entrada-izq": "casa-pensamientos",
     "discoteca": "discoteca",
+    "entrada-der": "cine",
     "zona-sur-der": "casa",
   };
 
@@ -38,8 +45,18 @@ export class PlazaScene extends Phaser.Scene {
     super("plaza");
   }
 
+  // Maps interior IDs back to the plaza entrance zone that leads there
+  private static readonly INTERIOR_SPAWN: Record<string, { x: number; y: number }> = {
+    castillo: { x: 1400, y: 285 },
+    "casa-pensamientos": { x: 338, y: 568 },
+    discoteca: { x: 1093, y: 568 },
+    cine: { x: 1650, y: 554 },
+    casa: { x: 1654, y: 808 },
+  };
+
   init(data: PlazaSceneData) {
     this.session = data.session;
+    this.fromInterior = data.fromInterior;
   }
 
   create() {
@@ -72,7 +89,12 @@ export class PlazaScene extends Phaser.Scene {
     }
 
     // ── Player ────────────────────────────────────────────────────
-    const spawn = plazaMap.spawn[this.session.characterId];
+    const defaultSpawn = plazaMap.spawn[this.session.characterId];
+    const spawn =
+      (this.fromInterior && PlazaScene.INTERIOR_SPAWN[this.fromInterior]) ?? defaultSpawn;
+    if (!spawn || typeof spawn === "string") {
+      throw new Error(`Invalid spawn for character ${this.session.characterId}`);
+    }
     const textureKey = `character-${this.session.characterId}`;
 
     this.player = this.physics.add
@@ -98,6 +120,13 @@ export class PlazaScene extends Phaser.Scene {
     this.cameras.main.setZoom(1.0);
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.fadeIn(300, 0, 0, 0);
+
+    // ── Multiplayer ───────────────────────────────────────────────
+    this.multiplayer = this.registry.get("multiplayer") as MultiplayerClient;
+    this.multiplayer.setScene("plaza");
+    this.multiplayer.onUpdate((update) => {
+      this.lastRemoteUpdate = update;
+    });
   }
 
   update() {
@@ -149,6 +178,17 @@ export class PlazaScene extends Phaser.Scene {
     // ── Movement ──────────────────────────────────────────────────
     resolveMovement(this.player, this.movementKeys, this.cursorKeys);
     this.refreshInteractionState();
+
+    // ── Multiplayer: send own position ────────────────────────────
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    const moving = body.velocity.lengthSq() > 0;
+    const direction = (this.player.getData("lastDirection") ?? "down") as Direction;
+    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving);
+
+    // ── Multiplayer: render remote player ─────────────────────────
+    if (this.lastRemoteUpdate) {
+      this.updateRemotePlayer(this.lastRemoteUpdate);
+    }
   }
 
   private refreshInteractionState(forceHide = false) {
@@ -185,6 +225,37 @@ export class PlazaScene extends Phaser.Scene {
 
     this.activeInteraction = next;
     setOverlayLabels(labels);
+  }
+
+  private updateRemotePlayer(update: PlayerUpdate) {
+    if (update.scene !== "plaza") {
+      this.remotePlayer?.setVisible(false);
+      return;
+    }
+
+    if (!this.remotePlayer) {
+      const textureKey = `character-${update.characterId}`;
+      this.remotePlayer = this.physics.add
+        .sprite(update.x, update.y, textureKey, 0)
+        .setSize(30, 20)
+        .setOffset(10, 28)
+        .setDepth(1)
+        .setAlpha(0.85);
+    }
+
+    this.remotePlayer.setVisible(true);
+    this.remotePlayer.setPosition(update.x, update.y);
+
+    if (update.moving) {
+      this.remotePlayer.anims.play(
+        `character-${update.characterId}-${update.direction}`,
+        true,
+      );
+    } else {
+      this.remotePlayer.anims.stop();
+      const frameLookup: Record<Direction, number> = { down: 0, left: 4, right: 8, up: 12 };
+      this.remotePlayer.setFrame(frameLookup[update.direction]);
+    }
   }
 
   private triggerEnterInterior(interiorId: string) {

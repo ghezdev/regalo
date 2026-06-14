@@ -1,23 +1,153 @@
 import * as Phaser from "phaser";
-import type { GameSession } from "../types/game";
+import type { GameSession, Direction, PlayerUpdate } from "../types/game";
+import type { MultiplayerClient } from "../systems/multiplayer";
 import { interiors } from "../data/maps/interiors";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
+import { setOverlayLabels, setOverlayHud, setAudioLabel, setDiscoAudioOpen } from "../ui-overlay-store";
+import { createAudioToggle } from "../systems/audio";
+import { ButtonAudioSystem } from "../systems/button-audio";
+import { audioCalendar, getAudioForButton } from "../data/audio-calendar";
+import type { AudioCalendarEntry } from "../types/content";
 
 interface InteriorSceneData {
   interiorId: string;
   session: GameSession;
 }
 
+const INTERIOR_WALL_THICKNESS = 16;
+
+function subtractIntervals(
+  baseStart: number,
+  baseEnd: number,
+  cuts: Array<{ start: number; end: number }>,
+) {
+  let segments = [{ start: baseStart, end: baseEnd }];
+
+  for (const cut of cuts) {
+    const nextSegments = [];
+
+    for (const segment of segments) {
+      if (cut.end <= segment.start || cut.start >= segment.end) {
+        nextSegments.push(segment);
+        continue;
+      }
+
+      if (cut.start > segment.start) {
+        nextSegments.push({ start: segment.start, end: cut.start });
+      }
+
+      if (cut.end < segment.end) {
+        nextSegments.push({ start: cut.end, end: segment.end });
+      }
+    }
+
+    segments = nextSegments;
+  }
+
+  return segments.filter((segment) => segment.end - segment.start > 0);
+}
+
+function buildWalkableBoundaryColliders(walkableZones: typeof interiors.castillo.walkableZones = []) {
+  if (!walkableZones?.length) {
+    return [];
+  }
+
+  const colliders: Array<{ x: number; y: number; width: number; height: number }> = [];
+
+  for (const zone of walkableZones) {
+    const x1 = zone.x;
+    const x2 = zone.x + zone.width;
+    const y1 = zone.y;
+    const y2 = zone.y + zone.height;
+
+    const touchingTop = walkableZones
+      .filter((other) => other !== zone && other.y + other.height === y1)
+      .map((other) => ({
+        start: Math.max(x1, other.x),
+        end: Math.min(x2, other.x + other.width),
+      }))
+      .filter((segment) => segment.end > segment.start);
+
+    const touchingBottom = walkableZones
+      .filter((other) => other !== zone && other.y === y2)
+      .map((other) => ({
+        start: Math.max(x1, other.x),
+        end: Math.min(x2, other.x + other.width),
+      }))
+      .filter((segment) => segment.end > segment.start);
+
+    const touchingLeft = walkableZones
+      .filter((other) => other !== zone && other.x + other.width === x1)
+      .map((other) => ({
+        start: Math.max(y1, other.y),
+        end: Math.min(y2, other.y + other.height),
+      }))
+      .filter((segment) => segment.end > segment.start);
+
+    const touchingRight = walkableZones
+      .filter((other) => other !== zone && other.x === x2)
+      .map((other) => ({
+        start: Math.max(y1, other.y),
+        end: Math.min(y2, other.y + other.height),
+      }))
+      .filter((segment) => segment.end > segment.start);
+
+    for (const segment of subtractIntervals(x1, x2, touchingTop)) {
+      colliders.push({
+        x: segment.start,
+        y: y1 - INTERIOR_WALL_THICKNESS,
+        width: segment.end - segment.start,
+        height: INTERIOR_WALL_THICKNESS,
+      });
+    }
+
+    for (const segment of subtractIntervals(x1, x2, touchingBottom)) {
+      colliders.push({
+        x: segment.start,
+        y: y2,
+        width: segment.end - segment.start,
+        height: INTERIOR_WALL_THICKNESS,
+      });
+    }
+
+    for (const segment of subtractIntervals(y1, y2, touchingLeft)) {
+      colliders.push({
+        x: x1 - INTERIOR_WALL_THICKNESS,
+        y: segment.start,
+        width: INTERIOR_WALL_THICKNESS,
+        height: segment.end - segment.start,
+      });
+    }
+
+    for (const segment of subtractIntervals(y1, y2, touchingRight)) {
+      colliders.push({
+        x: x2,
+        y: segment.start,
+        width: INTERIOR_WALL_THICKNESS,
+        height: segment.end - segment.start,
+      });
+    }
+  }
+
+  return colliders;
+}
+
 export class InteriorScene extends Phaser.Scene {
   private session!: GameSession;
   private interiorId!: string;
+  private interiorDef = interiors.castillo;
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursorKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
   private movementKeys!: MovementKeys;
   private exitZone!: Phaser.GameObjects.Zone;
   private buttonStates: Map<string, { zone: Phaser.GameObjects.Zone; sprite: Phaser.GameObjects.Sprite }> = new Map();
   private exiting = false;
-  private enterCooldown = true;
+  private interactKey!: Phaser.Input.Keyboard.Key;
+  private buttonAudio!: ButtonAudioSystem;
+  private previousActiveButtonId: string | null = null;
+  private multiplayer!: MultiplayerClient;
+  private remotePlayer: Phaser.Physics.Arcade.Sprite | null = null;
+  private lastRemoteUpdate: PlayerUpdate | null = null;
 
   constructor() {
     super("interior");
@@ -28,13 +158,27 @@ export class InteriorScene extends Phaser.Scene {
     this.session = data.session;
   }
 
+  preload() {
+    for (const entry of audioCalendar) {
+      this.load.audio(entry.key, entry.src);
+    }
+  }
+
   create() {
     const def = interiors[this.interiorId];
     if (!def) throw new Error(`Interior "${this.interiorId}" not found`);
+    this.interiorDef = def;
 
     this.exiting = false;
-    this.enterCooldown = true;
     this.buttonStates.clear();
+    this.previousActiveButtonId = null;
+    setOverlayLabels([]);
+    setOverlayHud({ movementHint: "" });
+    setAudioLabel(null);
+
+    if (this.interiorId === "discoteca") {
+      setDiscoAudioOpen(true);
+    }
 
     // World
     this.physics.world.setBounds(0, 0, def.worldWidth, def.worldHeight);
@@ -42,7 +186,9 @@ export class InteriorScene extends Phaser.Scene {
 
     // Colliders
     const walls = this.physics.add.staticGroup();
-    for (const c of def.colliders) {
+    const wallColliders = [...def.colliders, ...buildWalkableBoundaryColliders(def.walkableZones)];
+
+    for (const c of wallColliders) {
       const rect = this.add.rectangle(
         c.x + c.width / 2,
         c.y + c.height / 2,
@@ -89,19 +235,42 @@ export class InteriorScene extends Phaser.Scene {
       }
     }
 
+    const audioMap = new Map<string, AudioCalendarEntry>();
+    for (const btn of def.buttons || []) {
+      const entry = getAudioForButton(btn.id);
+      if (entry) {
+        audioMap.set(btn.id, entry);
+      }
+    }
+    this.buttonAudio = new ButtonAudioSystem(this, audioMap);
+
     // Input
     this.cursorKeys = this.input.keyboard!.createCursorKeys();
     this.movementKeys = createMovementKeys(this);
+    this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
     // Camera
     this.cameras.main.setBounds(0, 0, def.worldWidth, def.worldHeight);
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    if (def.staticCamera) {
+      const zoom = Math.min(this.cameras.main.width / def.worldWidth, this.cameras.main.height / def.worldHeight);
+      this.cameras.main.setZoom(zoom);
+      this.cameras.main.centerOn(def.worldWidth / 2, def.worldHeight / 2);
+    } else {
+      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    }
     this.cameras.main.setRoundPixels(true);
+    createAudioToggle(this);
     this.cameras.main.fadeIn(300, 0, 0, 0);
 
-    // Grace period: ignora la exitZone durante 500ms para no salir inmediatamente al entrar
-    this.time.delayedCall(500, () => {
-      this.enterCooldown = false;
+    // ── Multiplayer ───────────────────────────────────────────────
+    this.multiplayer = this.registry.get("multiplayer") as MultiplayerClient;
+    this.multiplayer.setScene(`interior:${this.interiorId}`);
+    this.multiplayer.onUpdate((update) => {
+      this.lastRemoteUpdate = update;
+    });
+
+    this.events.on("shutdown", () => {
+setDiscoAudioOpen(false);
     });
   }
 
@@ -110,25 +279,124 @@ export class InteriorScene extends Phaser.Scene {
 
     resolveMovement(this.player, this.movementKeys, this.cursorKeys);
 
-    if (!this.enterCooldown && this.physics.overlap(this.player, this.exitZone)) {
+    const atExit = this.physics.overlap(this.player, this.exitZone);
+
+    if (atExit && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
       this.triggerExit();
+      return;
     }
 
+    this.refreshExitLabel(atExit);
+
+    let activeButtonId: string | null = null;
+
     for (const [id, { zone, sprite }] of this.buttonStates) {
-      if (this.physics.overlap(this.player, zone)) {
+      const isOverlapping = this.physics.overlap(this.player, zone);
+
+      if (isOverlapping) {
+        activeButtonId = id;
         sprite.setTexture("tecla-presionada");
-        console.log(`botón ${id} presionado`);
       } else {
         sprite.setTexture("tecla");
       }
     }
+
+    if (activeButtonId !== this.previousActiveButtonId) {
+      if (this.previousActiveButtonId) {
+        this.buttonAudio.onButtonLeave(this.previousActiveButtonId);
+        setAudioLabel(null);
+      }
+
+      if (activeButtonId) {
+        this.buttonAudio.onButtonEnter(activeButtonId);
+      }
+
+      this.previousActiveButtonId = activeButtonId;
+    }
+
+    if (activeButtonId) {
+      const entry = getAudioForButton(activeButtonId);
+      if (entry) {
+        const { zone } = this.buttonStates.get(activeButtonId)!;
+        const camera = this.cameras.main;
+        const zoom = camera.zoom;
+        const wx = zone.x;
+        const wy = zone.y - zone.height / 2 - 16;
+        const screenX = (wx - camera.worldView.x) * zoom;
+        const screenY = (wy - camera.worldView.y) * zoom;
+        const { elapsed, duration } = this.buttonAudio.getProgress();
+        setAudioLabel({ text: entry.dateLabel, x: screenX, y: screenY, elapsed, duration });
+      }
+    }
+
+    // ── Multiplayer: send own position ────────────────────────────
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    const moving = body.velocity.lengthSq() > 0;
+    const direction = (this.player.getData("lastDirection") ?? "down") as Direction;
+    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving);
+
+    // ── Multiplayer: render remote player ─────────────────────────
+    if (this.lastRemoteUpdate) {
+      this.updateRemotePlayer(this.lastRemoteUpdate);
+    }
+  }
+
+  private updateRemotePlayer(update: PlayerUpdate) {
+    const expectedScene = `interior:${this.interiorId}`;
+    if (update.scene !== expectedScene) {
+      this.remotePlayer?.setVisible(false);
+      return;
+    }
+
+    if (!this.remotePlayer) {
+      const textureKey = `character-${update.characterId}`;
+      this.remotePlayer = this.physics.add
+        .sprite(update.x, update.y, textureKey, 0)
+        .setSize(30, 20)
+        .setOffset(10, 28)
+        .setDepth(2)
+        .setAlpha(0.85);
+    }
+
+    this.remotePlayer.setVisible(true);
+    this.remotePlayer.setPosition(update.x, update.y);
+
+    if (update.moving) {
+      this.remotePlayer.anims.play(
+        `character-${update.characterId}-${update.direction}`,
+        true,
+      );
+    } else {
+      this.remotePlayer.anims.stop();
+      const frameLookup: Record<Direction, number> = { down: 0, left: 4, right: 8, up: 12 };
+      this.remotePlayer.setFrame(frameLookup[update.direction]);
+    }
+  }
+
+  private refreshExitLabel(active: boolean) {
+    const camera = this.cameras.main;
+    const zoom = camera.zoom;
+    const wx = this.exitZone.x;
+    const wy = this.exitZone.y - this.exitZone.height / 2 - 16;
+    const screenX = (wx - camera.worldView.x) * zoom;
+    const screenY = (wy - camera.worldView.y) * zoom;
+    const inView =
+      screenX >= 0 && screenX <= camera.width &&
+      screenY >= 0 && screenY <= camera.height;
+
+    setOverlayLabels([
+      { id: "exit", text: "Salida", x: screenX, y: screenY, visible: inView, active },
+    ]);
   }
 
   private triggerExit() {
     this.exiting = true;
+    this.buttonAudio.destroy();
+    setAudioLabel(null);
+    setDiscoAudioOpen(false);
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.scene.start("plaza", { session: this.session });
+      this.scene.start("plaza", { session: this.session, fromInterior: this.interiorId });
     });
   }
 }
