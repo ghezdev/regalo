@@ -11,7 +11,7 @@ import {
 import { cineVideoConfig } from "../../data/cine";
 
 const LINKS_FILE_PATH = path.join(process.cwd(), "links.txt");
-const FOTOS_DIR_PATH = path.join(process.cwd(), "fotos");
+const FOTOS_DIR_PATH = path.join(process.cwd(), "public", "assets", "cinema", "media");
 
 export async function loadCinemaSlides() {
   const [links, mediaFiles] = await Promise.all([

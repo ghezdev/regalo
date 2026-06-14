@@ -58,7 +58,7 @@ export function buildCinemaSlides(input: BuildCinemaSlidesInput): CinemaSlide[] 
   const mediaSlides: CinemaSlide[] = sortSupportedCinemaMedia(input.mediaFiles).flatMap<CinemaSlide>(
     (fileName) => {
       const extension = getLowerCaseExtension(fileName);
-      const src = `/api/cinema/media/${encodeURIComponent(fileName)}`;
+      const src = `/assets/cinema/media/${encodeURIComponent(fileName)}`;
 
       if (IMAGE_EXTENSIONS.has(extension)) {
         return [
