@@ -8,6 +8,7 @@ export const loginUi = {
     "No supe cómo hablarte",
     "Y todavía te extraño",
     "Hice esto para vos",
+    "Usa auriculares, todo tiene sonido",
   ] as string[],
   usernamePrompt: "Usuario",
   passwordPrompt: "Clave",

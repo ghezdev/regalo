@@ -34,6 +34,7 @@ export const audioCalendar: AudioCalendarEntry[] = [
   { key: "voice-2026-06-11-030043", src: "/assets/audio/calendar/voice-2026-06-11-030043.ogg", dateLabel: "11 jun 2026", date: "2026-06-11" },
   { key: "voice-2026-06-12-021358", src: "/assets/audio/calendar/voice-2026-06-12-021358.ogg", dateLabel: "12 jun 2026", date: "2026-06-12" },
   { key: "voice-2026-06-13-034335", src: "/assets/audio/calendar/voice-2026-06-13-034335.ogg", dateLabel: "13 jun 2026", date: "2026-06-13" },
+  { key: "voice-2026-06-14-111115", src: "/assets/audio/calendar/voice-2026-06-14-111115.ogg", dateLabel: "14 jun 2026", date: "2026-06-14" },
 ];
 
 export function getAudioForButton(buttonId: string): AudioCalendarEntry | undefined {

@@ -36,7 +36,7 @@ describe("naomi story state storage", () => {
 
   it("round-trips a saved story state", () => {
     const state = {
-      stepId: "camp-choice",
+      stepId: "camp-choice" as const,
       visitedInteriors: ["cine", "discoteca"],
       triggeredDialogues: ["castle.intro.1"],
       endingLocked: false,

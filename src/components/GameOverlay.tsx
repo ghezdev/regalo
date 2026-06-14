@@ -5,14 +5,29 @@ import {
   getGameOverlayState,
   subscribeToGameOverlay,
 } from "@/game/ui-overlay-store";
+import { CineSlideshowOverlay } from "./CineSlideshowOverlay";
 import { DiscoAudioPlayer } from "./DiscoAudioPlayer";
-import { CineVideoPlayer } from "./CineVideoPlayer";
 
 function formatTime(seconds: number): string {
-  if (isNaN(seconds) || seconds <= 0) return "--:--";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return "--:--";
+  }
+
+  const safeSeconds = Math.floor(seconds);
+  const m = Math.floor(safeSeconds / 60);
+  const s = safeSeconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function getProgressWidth(elapsed: number, duration: number): string {
+  if (!Number.isFinite(elapsed) || !Number.isFinite(duration) || duration <= 0) {
+    return "0%";
+  }
+
+  const progress = (elapsed / duration) * 100;
+  const clampedProgress = Math.max(0, Math.min(100, progress));
+
+  return `${clampedProgress}%`;
 }
 
 type GameOverlayProps = {
@@ -48,16 +63,10 @@ export function GameOverlay({ displayScale }: GameOverlayProps) {
               <div
                 className="audio-progress-fill"
                 style={{
-                  width: `${
-                    overlay.activeAudioLabel.duration > 0
-                      ? Math.min(
-                          100,
-                          (overlay.activeAudioLabel.elapsed /
-                            overlay.activeAudioLabel.duration) *
-                            100,
-                        )
-                      : 0
-                  }%`,
+                  width: getProgressWidth(
+                    overlay.activeAudioLabel.elapsed,
+                    overlay.activeAudioLabel.duration,
+                  ),
                 }}
               />
             </div>
@@ -99,7 +108,7 @@ export function GameOverlay({ displayScale }: GameOverlayProps) {
 
       {overlay.discoAudioOpen ? <DiscoAudioPlayer /> : null}
 
-      {overlay.cineVideoOpen ? <CineVideoPlayer /> : null}
+      {overlay.cineVideoOpen ? <CineSlideshowOverlay /> : null}
 
       {overlay.endingBlackoutVisible ? <div className="ending-blackout" /> : null}
     </div>

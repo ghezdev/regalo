@@ -37,6 +37,10 @@ export const interiors: Record<string, InteriorDefinition> = {
       { x: 379, y: 362, width: 1494, height: 205 },
     ],
     exitZone: { x: 1750, y: 381, width: 79, height: 37 },
+    storySpawns: {
+      "castle-intro": { x: 220, y: 410 },
+      "castle-exit": { x: 1789, y: 399 },
+    },
   },
 
   "casa-pensamientos": {
@@ -122,5 +126,10 @@ export const interiors: Record<string, InteriorDefinition> = {
       { x: 979, y: 1215, width: 114, height: 50  },
     ],
     exitZone: { x: 988, y: 1215, width: 97, height: 40 },
+    lunaRoamZones: [
+      { x: 450, y: 100, width: 200, height: 150 },
+      { x: 700, y: 120, width: 180, height: 120 },
+      { x: 930, y: 100, width: 200, height: 150 },
+    ],
   },
 };

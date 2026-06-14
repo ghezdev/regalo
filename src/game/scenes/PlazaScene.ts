@@ -7,6 +7,8 @@ import { PLAZA_INTERIOR_SPAWN } from "../data/maps/plaza-interiors";
 import { createAudioToggle, pauseAmbientMusic, playAmbientMusic } from "../systems/audio";
 import { DialogueController } from "../systems/dialogue";
 import { markNaomiBadEndingSeen } from "../systems/ending/state";
+import { loadNaomiStoryState, saveNaomiStoryState } from "../systems/story/state";
+import { markEndingChoice, completeStep } from "../systems/story/progression";
 import { createInteractionPrompt, type ActiveInteraction } from "../systems/interactions";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
 import type { GameSession, Direction, PlayerUpdate } from "../types/game";
@@ -35,6 +37,12 @@ export class PlazaScene extends Phaser.Scene {
   private remotePlayer: Phaser.GameObjects.Sprite | null = null;
   private lastRemoteUpdate: PlayerUpdate | null = null;
   private naomiBadEndingActive = false;
+  private campStayZone: Phaser.GameObjects.Zone | null = null;
+  private campLeaveZone: Phaser.GameObjects.Zone | null = null;
+  private campApproachZone: Phaser.GameObjects.Zone | null = null;
+  private preSalidaZone: Phaser.GameObjects.Zone | null = null;
+  private campChoiceActive = false;
+  private preSalidaSeen = false;
 
   private static readonly INTERIOR_MAP: Record<string, string> = {
     "castle-entrance": "castillo",
@@ -61,6 +69,12 @@ export class PlazaScene extends Phaser.Scene {
     this.guilleFloorActive = false;
     this.activeInteraction = null;
     this.naomiBadEndingActive = false;
+    this.campChoiceActive = false;
+    this.preSalidaSeen = false;
+    this.campStayZone = null;
+    this.campLeaveZone = null;
+    this.campApproachZone = null;
+    this.preSalidaZone = null;
     setEndingBlackoutVisible(false);
 
     // ── World ──────────────────────────────────────────────────────
@@ -133,6 +147,39 @@ export class PlazaScene extends Phaser.Scene {
     this.interactions = plazaMap.interactions.map((zone) => createInteractionPrompt(this, zone, 1));
     setOverlayHud({ movementHint: plazaUi.movementHint });
 
+    // ── Naomi story camp zones ─────────────────────────────────────
+    if (this.session.characterId === "naomi" && plazaMap.storyZones) {
+      const sz = plazaMap.storyZones;
+      this.preSalidaZone = this.add.zone(
+        sz.preSalida.x + sz.preSalida.width / 2,
+        sz.preSalida.y + sz.preSalida.height / 2,
+        sz.preSalida.width,
+        sz.preSalida.height,
+      );
+      this.physics.add.existing(this.preSalidaZone, true);
+      this.campApproachZone = this.add.zone(
+        sz.campApproach.x + sz.campApproach.width / 2,
+        sz.campApproach.y + sz.campApproach.height / 2,
+        sz.campApproach.width,
+        sz.campApproach.height,
+      );
+      this.physics.add.existing(this.campApproachZone, true);
+      this.campStayZone = this.add.zone(
+        sz.campStay.x + sz.campStay.width / 2,
+        sz.campStay.y + sz.campStay.height / 2,
+        sz.campStay.width,
+        sz.campStay.height,
+      );
+      this.physics.add.existing(this.campStayZone, true);
+      this.campLeaveZone = this.add.zone(
+        sz.campLeave.x + sz.campLeave.width / 2,
+        sz.campLeave.y + sz.campLeave.height / 2,
+        sz.campLeave.width,
+        sz.campLeave.height,
+      );
+      this.physics.add.existing(this.campLeaveZone, true);
+    }
+
     // ── Camera ────────────────────────────────────────────────────
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
@@ -196,6 +243,52 @@ export class PlazaScene extends Phaser.Scene {
         this.player.setVelocity(0, 0);
       } else {
         this.player.setTexture("character-guillermo");
+      }
+    }
+
+    // ── Naomi pre-salida warning ───────────────────────────────────
+    if (
+      this.session.characterId === "naomi" &&
+      !this.preSalidaSeen &&
+      this.preSalidaZone &&
+      this.physics.overlap(this.player, this.preSalidaZone)
+    ) {
+      this.preSalidaSeen = true;
+      this.dialogue.show("", dialogues["pre-salida"].lines, { hint: "presiona e para continuar" });
+    }
+
+    // ── Naomi story camp approach & choice ────────────────────────
+    if (this.session.characterId === "naomi" && !this.campChoiceActive) {
+      const storyState = loadNaomiStoryState();
+
+      if (storyState.stepId === "camp-approach" && this.campApproachZone) {
+        if (this.physics.overlap(this.player, this.campApproachZone)) {
+          const next = completeStep(storyState, "camp-approach");
+          saveNaomiStoryState(next);
+          this.campChoiceActive = true;
+          this.dialogue.show("", [
+            "Aquí está Guille.",
+            "Si querés quedarte con él, ve hacia la izquierda.",
+            "Si querés seguir tu camino, ve hacia la derecha.",
+          ], { hint: "presiona e para continuar" });
+        }
+      }
+
+      if (storyState.stepId === "camp-choice") {
+        if (this.campStayZone && this.physics.overlap(this.player, this.campStayZone)) {
+          const next = markEndingChoice(storyState, "stay");
+          saveNaomiStoryState(next);
+          this.naomiBadEndingActive = true;
+          pauseAmbientMusic();
+          setEndingBlackoutVisible(true);
+        } else if (this.campLeaveZone && this.physics.overlap(this.player, this.campLeaveZone)) {
+          const next = markEndingChoice(storyState, "leave");
+          saveNaomiStoryState(next);
+          markNaomiBadEndingSeen();
+          pauseAmbientMusic();
+          this.naomiBadEndingActive = true;
+          setEndingBlackoutVisible(true);
+        }
       }
     }
 

@@ -9,6 +9,8 @@ import {
   LOGIN_TRANSITION_STORAGE_VALUE,
 } from "@/game/data/ui";
 import { hasNaomiBadEndingSeen } from "@/game/systems/ending/state";
+import { loadNaomiStoryState } from "@/game/systems/story/state";
+import { getNaomiGameAccess } from "@/lib/naomi-access";
 
 const REVEAL_DURATION_MS = 1800;
 
@@ -37,9 +39,15 @@ export function GameShell() {
     }
 
     setSession(storedSession);
-    if (storedSession.characterId === "naomi" && hasNaomiBadEndingSeen()) {
-      setShowNaomiBadEnding(true);
+
+    if (storedSession.characterId === "naomi") {
+      const storyState = loadNaomiStoryState();
+      const access = getNaomiGameAccess(storedSession, storyState);
+      if (!access.allowed || hasNaomiBadEndingSeen()) {
+        setShowNaomiBadEnding(true);
+      }
     }
+
     setIsReady(true);
   }, [router]);
 

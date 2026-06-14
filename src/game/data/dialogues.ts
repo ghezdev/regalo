@@ -106,10 +106,47 @@ export const dialogues: Record<string, DialogueEntry> = {
     id: "zona-sur-der",
     lines: ["Zona sur-derecha..."],
   },
+  "pre-salida": {
+    id: "pre-salida",
+    lines: [
+      "Acá decidís si le das una oportunidad a Guille para conversar, o si querés irte.",
+      "Quedarte no significa volver a dejar todo como antes, solo conversar, conversar lo que no pudieron en su momento.",
+      "Irte significa que él no te molestará más, y dará por entendido que no querés saber nada más de él, terminando el juego.",
+    ],
+  },
   "fondo-sur": {
     id: "fondo-sur",
     lines: [
       "Perdón por todo lo que no te pude dar, espero que puedas conseguir a alguien mejor, disfruta de tu vida al máximo, sos muy hermosa y muy inteligente, sé que te va a ir bien en la vida, carpe diem <3",
+    ],
+  },
+  "casa-pensamientos-exit": {
+    id: "casa-pensamientos-exit",
+    lines: [
+      "A pesar de unos malos pensamientos",
+      "Guille te quiere mucho",
+      "Todos los días te pensó",
+      "Todos los días te extraño",
+      "Él no puede estar sin vos",
+    ],
+  },
+  "discoteca-exit": {
+    id: "discoteca-exit",
+    lines: [
+      "Es una playlist que",
+      "Si te sabés el nombre de cada una de las canciones que suenan",
+      "La primera letra forma 'TEAMOMUCHOMAS'",
+      "En respuesta a tu playlist",
+      "Está en spotify",
+    ],
+  },
+  "casa-exit": {
+    id: "casa-exit",
+    lines: [
+      "Guille últimamente pensaba mucho en convivir con vos",
+      "Tenia ganas de crecer con vos",
+      "Hasta consideró tener una familia con vos",
+      "Le gustas tanto, que tu pérdida le fue muy dolorosa",
     ],
   },
 };

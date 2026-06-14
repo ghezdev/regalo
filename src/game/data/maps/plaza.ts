@@ -97,14 +97,14 @@ export const plazaMap: ImagePlazaMap = {
       id: "entrada-izq",
       label: "Casa de los pensamientos",
       targetName: "Casa de los pensamientos",
-      x: 308, y: 545, width: 60, height: 40,
+      x: 350, y: 545, width: 60, height: 40,
       interactionId: "entrada-izq",
     },
     {
       id: "discoteca",
       label: "Discoteca",
       targetName: "Discoteca",
-      x: 1053, y: 545, width: 80, height: 40,
+      x: 1100, y: 545, width: 80, height: 40,
       interactionId: "discoteca",
     },
     {
@@ -129,4 +129,11 @@ export const plazaMap: ImagePlazaMap = {
       interactionId: "fondo-sur",
     },
   ],
+
+  storyZones: {
+    preSalida: { x: 1333, y: 1100, width: 388, height: 80 },
+    campApproach: { x: 1333, y: 1100, width: 138, height: 50 },
+    campStay: { x: 1333, y: 1165, width: 60, height: 60 },
+    campLeave: { x: 1411, y: 1165, width: 60, height: 60 },
+  },
 };

@@ -94,10 +94,18 @@ export interface ImagePlazaMap {
   spawn: Record<string, { x: number; y: number }>;
   colliders: ImageMapCollider[];
   interactions: MapInteraction[];
+  storyZones?: PlazaStoryZones;
 }
 
 export interface ButtonDefinition {
   id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface StoryZoneRect {
   x: number;
   y: number;
   width: number;
@@ -114,4 +122,13 @@ export interface InteriorDefinition {
   exitZone: ImageMapCollider;
   buttons?: ButtonDefinition[];
   staticCamera?: boolean;
+  storySpawns?: Record<string, { x: number; y: number }>;
+  lunaRoamZones?: StoryZoneRect[];
+}
+
+export interface PlazaStoryZones {
+  preSalida: StoryZoneRect;
+  campStay: StoryZoneRect;
+  campLeave: StoryZoneRect;
+  campApproach: StoryZoneRect;
 }

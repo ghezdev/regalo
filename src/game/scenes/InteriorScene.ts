@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import type { GameSession, Direction, PlayerUpdate } from "../types/game";
 import type { MultiplayerClient } from "../systems/multiplayer";
 import { interiors } from "../data/maps/interiors";
+import { plazaUi } from "../data/ui";
 import { PLAZA_INTERIOR_SPAWN } from "../data/maps/plaza-interiors";
 import { createMovementKeys, resolveMovement, type MovementKeys } from "../systems/movement";
 import { setOverlayLabels, setOverlayHud, setAudioLabel, setDiscoAudioOpen, setCineVideoOpen } from "../ui-overlay-store";
@@ -11,7 +12,10 @@ import { audioCalendar, getAudioForButton } from "../data/audio-calendar";
 import type { AudioCalendarEntry } from "../types/content";
 import { DialogueController } from "../systems/dialogue";
 import { naomiIntroDialogue, dialogues } from "../data/dialogues";
-import { hasSeenNaomiIntro, markNaomiIntroAsSeen } from "../systems/intro/state";
+import { hasSeenNaomiIntro, markNaomiIntroAsSeen, hasSeenExitDialogue, markExitDialogueAsSeen } from "../systems/intro/state";
+import { loadNaomiStoryState, saveNaomiStoryState } from "../systems/story/state";
+import { completeStep, INTERIOR_STORY_STEPS } from "../systems/story/progression";
+import { startLunaWander } from "../systems/story/luna-wander";
 
 interface InteriorSceneData {
   interiorId: string;
@@ -155,6 +159,8 @@ export class InteriorScene extends Phaser.Scene {
   private remotePlayer: Phaser.GameObjects.Sprite | null = null;
   private lastRemoteUpdate: PlayerUpdate | null = null;
   private dialogue!: DialogueController;
+  private lunaSprite: Phaser.Physics.Arcade.Sprite | null = null;
+  private lunaWanderTimer: Phaser.Time.TimerEvent | null = null;
 
   constructor() {
     super("interior");
@@ -180,11 +186,15 @@ export class InteriorScene extends Phaser.Scene {
     this.exiting = false;
     this.buttonStates.clear();
     this.previousActiveButtonId = null;
+    this.lunaWanderTimer?.remove();
+    this.lunaWanderTimer = null;
+    this.lunaSprite?.destroy();
+    this.lunaSprite = null;
     this.remotePlayer?.destroy();
     this.remotePlayer = null;
     this.lastRemoteUpdate = null;
     setOverlayLabels([]);
-    setOverlayHud({ movementHint: "" });
+    setOverlayHud({ movementHint: plazaUi.movementHint });
     setAudioLabel(null);
 
     pauseAmbientMusic();
@@ -193,7 +203,7 @@ export class InteriorScene extends Phaser.Scene {
       setDiscoAudioOpen(true);
     }
 
-    if (this.interiorId === "cine") {
+    if (this.interiorId === "cine" && this.session.characterId === "naomi") {
       setCineVideoOpen(true);
     }
 
@@ -227,9 +237,14 @@ export class InteriorScene extends Phaser.Scene {
     );
     this.physics.add.existing(this.exitZone, true);
 
-    // Player — spawn at override position or exit zone center
-    const spawnX = this.spawnOverride?.x ?? def.exitZone.x + def.exitZone.width / 2;
-    const spawnY = this.spawnOverride?.y ?? def.exitZone.y + def.exitZone.height / 2;
+    // Player — spawn at override, story spawn, or exit zone center
+    let storySpawnPos: { x: number; y: number } | undefined;
+    if (this.session.characterId === "naomi" && def.storySpawns) {
+      const storyState = loadNaomiStoryState();
+      storySpawnPos = def.storySpawns[storyState.stepId];
+    }
+    const spawnX = this.spawnOverride?.x ?? storySpawnPos?.x ?? def.exitZone.x + def.exitZone.width / 2;
+    const spawnY = this.spawnOverride?.y ?? storySpawnPos?.y ?? def.exitZone.y + def.exitZone.height / 2;
     const textureKey = `character-${this.session.characterId}`;
     this.player = this.physics.add
       .sprite(spawnX, spawnY, textureKey, 0)
@@ -308,6 +323,30 @@ export class InteriorScene extends Phaser.Scene {
       this.dialogue.show("Mis Pensamientos", entry.lines, { hint: "presiona e para continuar" });
     }
 
+    // ── Naomi story: advance intro step on entry ──────────────────
+    if (this.session.characterId === "naomi") {
+      const stepsForInterior = INTERIOR_STORY_STEPS[this.interiorId];
+      if (stepsForInterior) {
+        const storyState = loadNaomiStoryState();
+        if (storyState.stepId === stepsForInterior.intro) {
+          const next = completeStep(storyState, stepsForInterior.intro);
+          saveNaomiStoryState(next);
+        }
+      }
+    }
+
+    // ── Luna wandering in casa ────────────────────────────────────
+    if (this.interiorId === "casa" && this.session.characterId === "naomi" && def.lunaRoamZones?.length) {
+      const textureKey = `character-naomi`;
+      this.lunaSprite = this.physics.add
+        .sprite(def.lunaRoamZones[0].x + 50, def.lunaRoamZones[0].y + 50, textureKey, 4)
+        .setDepth(2)
+        .setAlpha(0.7)
+        .setSize(30, 20)
+        .setOffset(10, 28);
+      this.lunaWanderTimer = startLunaWander(this, this.lunaSprite, def.lunaRoamZones);
+    }
+
     // ── Multiplayer ───────────────────────────────────────────────
     this.multiplayer = this.registry.get("multiplayer") as MultiplayerClient;
     this.multiplayer.setScene(`interior:${this.interiorId}`);
@@ -341,7 +380,23 @@ export class InteriorScene extends Phaser.Scene {
     const atExit = this.physics.overlap(this.player, this.exitZone);
 
     if (atExit && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-      this.triggerExit();
+      const exitDialogueId = `${this.interiorId}-exit`;
+      const exitDialogue = dialogues[exitDialogueId];
+      if (
+        exitDialogue &&
+        this.session.characterId === "naomi" &&
+        !hasSeenExitDialogue(this.interiorId)
+      ) {
+        markExitDialogueAsSeen(this.interiorId);
+        this.dialogue.show("", exitDialogue.lines, {
+          hint: "presiona e para continuar",
+          onComplete: () => {
+            this.triggerExit();
+          },
+        });
+      } else {
+        this.triggerExit();
+      }
       return;
     }
 
@@ -451,10 +506,23 @@ export class InteriorScene extends Phaser.Scene {
   private triggerExit() {
     this.exiting = true;
     this.buttonAudio.destroy();
+    this.lunaWanderTimer?.remove();
     setAudioLabel(null);
     setDiscoAudioOpen(false);
     setCineVideoOpen(false);
     resumeAmbientMusic();
+
+    if (this.session.characterId === "naomi") {
+      const stepsForInterior = INTERIOR_STORY_STEPS[this.interiorId];
+      if (stepsForInterior) {
+        const storyState = loadNaomiStoryState();
+        if (storyState.stepId === stepsForInterior.exit) {
+          const next = completeStep(storyState, stepsForInterior.exit);
+          saveNaomiStoryState(next);
+        }
+      }
+    }
+
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.start("plaza", { session: this.session, fromInterior: this.interiorId });
