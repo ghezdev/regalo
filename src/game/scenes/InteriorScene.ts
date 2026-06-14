@@ -172,6 +172,8 @@ export class InteriorScene extends Phaser.Scene {
     this.exiting = false;
     this.buttonStates.clear();
     this.previousActiveButtonId = null;
+    this.remotePlayer = null;
+    this.lastRemoteUpdate = null;
     setOverlayLabels([]);
     setOverlayHud({ movementHint: "" });
     setAudioLabel(null);

@@ -60,6 +60,12 @@ export class PlazaScene extends Phaser.Scene {
   }
 
   create() {
+    // Reset per-session state (scene instance is reused across restarts)
+    this.remotePlayer = null;
+    this.lastRemoteUpdate = null;
+    this.guilleFloorActive = false;
+    this.activeInteraction = null;
+
     // ── World ──────────────────────────────────────────────────────
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
@@ -172,20 +178,19 @@ export class PlazaScene extends Phaser.Scene {
       this.player.setVelocity(0, 0);
       if (!this.guilleFloorActive) this.player.anims.stop();
       this.refreshInteractionState(true);
-      return;
+    } else {
+      // ── Movement ────────────────────────────────────────────────
+      resolveMovement(this.player, this.movementKeys, this.cursorKeys);
+      this.refreshInteractionState();
     }
 
-    // ── Movement ──────────────────────────────────────────────────
-    resolveMovement(this.player, this.movementKeys, this.cursorKeys);
-    this.refreshInteractionState();
-
-    // ── Multiplayer: send own position ────────────────────────────
+    // ── Multiplayer: send own position (always) ───────────────────
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const moving = body.velocity.lengthSq() > 0;
     const direction = (this.player.getData("lastDirection") ?? "down") as Direction;
-    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving);
+    this.multiplayer.sendPosition(this.player.x, this.player.y, direction, moving, this.guilleFloorActive);
 
-    // ── Multiplayer: render remote player ─────────────────────────
+    // ── Multiplayer: render remote player (always) ────────────────
     if (this.lastRemoteUpdate) {
       this.updateRemotePlayer(this.lastRemoteUpdate);
     }
@@ -245,6 +250,17 @@ export class PlazaScene extends Phaser.Scene {
 
     this.remotePlayer.setVisible(true);
     this.remotePlayer.setPosition(update.x, update.y);
+
+    if (update.floorMode) {
+      this.remotePlayer.setTexture("guille-piso");
+      this.remotePlayer.anims.stop();
+      return;
+    }
+
+    const expectedTexture = `character-${update.characterId}`;
+    if (this.remotePlayer.texture.key !== expectedTexture) {
+      this.remotePlayer.setTexture(expectedTexture);
+    }
 
     if (update.moving) {
       this.remotePlayer.anims.play(

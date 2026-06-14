@@ -33,7 +33,7 @@ export class MultiplayerClient {
     this.onRemoteUpdate = callback;
   }
 
-  sendPosition(x: number, y: number, direction: Direction, moving: boolean) {
+  sendPosition(x: number, y: number, direction: Direction, moving: boolean, floorMode = false) {
     const now = Date.now();
     if (now - this.lastSentAt < MultiplayerClient.SEND_INTERVAL_MS) return;
     this.lastSentAt = now;
@@ -45,6 +45,7 @@ export class MultiplayerClient {
       direction,
       moving,
       scene: this.currentScene,
+      ...(floorMode && { floorMode: true }),
     };
     this.socket.send(JSON.stringify(update));
   }

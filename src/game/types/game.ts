@@ -25,4 +25,5 @@ export interface PlayerUpdate {
   direction: Direction;
   moving: boolean;
   scene: string;
+  floorMode?: boolean;
 }
