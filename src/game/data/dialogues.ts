@@ -5,7 +5,8 @@ export const naomiIntroDialogue: DialogueEntry = {
   lines: [
     "Te hice este juego, con un conjunto de edificios el cual podes interactuar.",
     "La idea es que vayas yendo de edificio en edificio, y si queres, disfrutar de lo que contiene cada uno de los edificios.",
-    "Queria hacerte muchas cosas mas, pero queria terminar para el sabado 13 de junio a las 23:59, pero no lo logre.",
+    "Tengo muchas cosas mas que te hice para mostrar, pero queria terminar para el sabado 13 de junio a las 23:59, pero no lo logre.",
+    "Si quisieras verlas, podes decirmelo, desde ahora no te voy a tener bloqueada.",
     "Asi que te muestro lo poco que pude hacerte. Espero te guste.",
     "Quiero volver a hablarte, pero no se como, despues de lo que hice, creo que no te es comodo volver a hablarte asi de repente.",
     "Por eso hice este juego, para que me des la oportunidad de si hablar o no.",
@@ -14,6 +15,8 @@ export const naomiIntroDialogue: DialogueEntry = {
     "A la izquierda de la plaza, muy a la izquierda, tenes un edificio especial, tiene ambiente tenebroso porque en realidad no es lugar lindo, pero esta si queres ir a verlo.",
     "El final del juego es muy al sur, ahi me vas a encontrar a mi, si decidis seguir bajando luego de verme, significa que no queres hablar conmigo ni saber nada de mi, si fuera asi, yo respetare tu decision.",
     "Si no te vas, y te quedas conmigo, asumo que aceptaste que podamos hablar.",
+    "Quiero que tengas la oportunidad de comunicarte conmigo, sin que tengas que hacerlo, porque se cuanto te lastima, y es lo que menos busco.",
+    "Espero que te guste, y que elijas lo que elijas, te lleves que nunca te deje de amar, a pesar de haberme ido.",
   ],
 };
 
