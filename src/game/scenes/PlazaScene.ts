@@ -30,7 +30,7 @@ export class PlazaScene extends Phaser.Scene {
   private activeInteraction: ActiveInteraction | null = null;
   private guilleFloorActive = false;
   private multiplayer!: MultiplayerClient;
-  private remotePlayer: Phaser.Physics.Arcade.Sprite | null = null;
+  private remotePlayer: Phaser.GameObjects.Sprite | null = null;
   private lastRemoteUpdate: PlayerUpdate | null = null;
 
   private static readonly INTERIOR_MAP: Record<string, string> = {
@@ -61,6 +61,7 @@ export class PlazaScene extends Phaser.Scene {
 
   create() {
     // Reset per-session state (scene instance is reused across restarts)
+    this.remotePlayer?.destroy();
     this.remotePlayer = null;
     this.lastRemoteUpdate = null;
     this.guilleFloorActive = false;
@@ -256,10 +257,8 @@ export class PlazaScene extends Phaser.Scene {
 
     if (!this.remotePlayer) {
       const textureKey = `character-${update.characterId}`;
-      this.remotePlayer = this.physics.add
+      this.remotePlayer = this.add
         .sprite(update.x, update.y, textureKey, 0)
-        .setSize(30, 20)
-        .setOffset(10, 28)
         .setDepth(1)
         .setAlpha(0.85);
     }
