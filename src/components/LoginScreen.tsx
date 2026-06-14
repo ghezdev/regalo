@@ -85,15 +85,19 @@ export function LoginScreen() {
     }
   }, [mode]);
 
+  // Fallback: if a key is pressed while the input isn't focused, focus it so the
+  // next character lands in the right place. Covers browsers where autoFocus fails.
   useEffect(() => {
-    const focusInput = () => {
-      inputRef.current?.focus();
+    const refocusOnKey = () => {
+      if (document.activeElement !== inputRef.current) {
+        inputRef.current?.focus();
+      }
     };
 
-    window.addEventListener("pointerdown", focusInput);
+    window.addEventListener("keydown", refocusOnKey);
 
     return () => {
-      window.removeEventListener("pointerdown", focusInput);
+      window.removeEventListener("keydown", refocusOnKey);
     };
   }, []);
 
