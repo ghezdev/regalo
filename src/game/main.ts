@@ -10,8 +10,9 @@ import { MultiplayerClient } from "./systems/multiplayer";
 export function createGame(container: HTMLElement, session: GameSession) {
   resetGameOverlayState();
 
-  const partykitHost = process.env.NEXT_PUBLIC_PARTYKIT_HOST ?? "localhost:1999";
-  const multiplayer = new MultiplayerClient(partykitHost, session.characterId);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  const multiplayer = new MultiplayerClient(supabaseUrl, supabaseAnonKey, session.characterId);
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,

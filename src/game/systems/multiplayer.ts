@@ -1,28 +1,27 @@
-import PartySocket from "partysocket";
+import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
 import type { CharacterId, Direction, PlayerUpdate } from "../types/game";
 
 type RemoteUpdateCallback = (update: PlayerUpdate) => void;
 
 export class MultiplayerClient {
-  private socket: PartySocket;
+  private channel: RealtimeChannel;
   private characterId: CharacterId;
   private currentScene = "plaza";
   private onRemoteUpdate: RemoteUpdateCallback | null = null;
   private lastSentAt = 0;
   private static readonly SEND_INTERVAL_MS = 50;
 
-  constructor(host: string, characterId: CharacterId) {
+  constructor(supabaseUrl: string, supabaseAnonKey: string, characterId: CharacterId) {
     this.characterId = characterId;
-    this.socket = new PartySocket({ host, room: "regalo-game" });
 
-    this.socket.addEventListener("message", (event) => {
-      try {
-        const update = JSON.parse(event.data as string) as PlayerUpdate;
-        this.onRemoteUpdate?.(update);
-      } catch {
-        // ignore malformed messages
-      }
-    });
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    this.channel = supabase.channel("regalo-game");
+
+    this.channel
+      .on("broadcast", { event: "position" }, ({ payload }) => {
+        this.onRemoteUpdate?.(payload as PlayerUpdate);
+      })
+      .subscribe();
   }
 
   setScene(scene: string) {
@@ -47,10 +46,15 @@ export class MultiplayerClient {
       scene: this.currentScene,
       ...(floorMode && { floorMode: true }),
     };
-    this.socket.send(JSON.stringify(update));
+
+    void this.channel.send({
+      type: "broadcast",
+      event: "position",
+      payload: update,
+    });
   }
 
   destroy() {
-    this.socket.close();
+    void this.channel.unsubscribe();
   }
 }

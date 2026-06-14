@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "next": "^15.0.0",
     "partysocket": "^1.2.0",
     "phaser": "^3.90.0",
